@@ -265,9 +265,9 @@ Users must be able to choose and change currency.
 
 ## 16. Mascot
 
-An **original tarsier character** — big round eyes, tiny body, holding on tight to a branch. The idea: *small but watchful — it keeps an eye on your money.*
+A **cartoon Pomeranian** based on my own dog — round face, peach fluffy fur, pointed ears, black eyes and nose, pink tongue, pink collar — holding a ₱ coin. The idea: *a loyal little buddy that keeps an eye on your money.* The approved SVG is in `design/mockups/Mascot.dc.html` (see `design/DESIGN.md`).
 
-- **Money tie-ins:** clutches a coin like a treasure, sits on a stack of coins, carries a tiny coin purse, eyes sparkle with a coin reflection on milestones.
+- **Money tie-ins:** holds a ₱ coin, sparkles on milestones.
 - **Moods / states** (simple set, reused everywhere):
   - Neutral / watchful — default dashboard
   - Cheering — payment logged, milestone reached, debt paid off
@@ -277,8 +277,8 @@ An **original tarsier character** — big round eyes, tiny body, holding on tigh
   - Thinking — strategy picker / what-if simulator
 - **Where it appears:** splash, onboarding helper, empty states, lock screen, milestones, app icon candidate.
 - **Format:** SVG for static poses; Lottie or Rive for 2–4 short animations. Keep total animation assets small.
-- **Design must be fully original.** Do not base it on, trace, or imitate any existing tarsier mascot, brand character, or cartoon. If generating placeholder art, keep it simple and clearly ours.
-- Mascot name ideas (undecided): **Barya** ("coins"), **Sentimo**, **Tipid** ("frugal"), **Piso**.
+- **Design must stay original.** Do not imitate any existing brand character or cartoon.
+- Mascot name: undecided.
 - Accessibility: the mascot never carries information alone; its message always appears as text too. Users can turn off mascot animations (respect "reduce motion").
 
 ---
@@ -358,6 +358,19 @@ Implementation notes:
 - Paywall screen: calm, one screen, list what Pro adds, one price, "Maybe later" clearly visible. No dark patterns, no countdown timers, no nagging more than once per week.
 - Consider an introductory/launch price later via Play Console pricing; keep ₱99 as the anchor.
 - Update the Play **Data safety** form: purchase handled by Google Play; the app itself still collects no data.
+
+---
+
+## 21. UI design (follow this)
+
+The UI is designed already. **Read `design/DESIGN.md` before building any screen** — it has the color and type tokens (DM Sans only), components, all 14 screens, and the screen flow.
+
+- `design/mockups/*.dc.html` — mockup sources with exact colors, sizes and copy. Reference only: rebuild screens as React Native components; never embed or port this HTML.
+- `design/screens/*.png` — screenshots of each screen, if present. Look at the matching one before building a screen.
+- Put the tokens in one theme file (`src/theme/`) and use them everywhere; no hard-coded colors or font sizes in components.
+- Copy (button labels, messages) comes from the mockups unless I say otherwise.
+- Screens listed under "Not designed yet" in DESIGN.md: propose a layout in the same style and show me before building.
+- Dashboard payments: logging a payment opens the Log Payment bottom sheet (amount prefilled with the planned amount, editable, quick chips, live impact message). Extra payments beyond the plan are logged from "Log an extra payment" and go to the focus debt.
 
 ---
 

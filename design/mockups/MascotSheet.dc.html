@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kash — Mascot moods</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5B47}a:hover{color:#143F31}
+</style>
+</helmet>
+<div style="width: 1000px; height: 300px; box-sizing: border-box; background: #F3F5EF; color: #142019; font-family: 'DM Sans', sans-serif; padding: 28px 32px; display: flex; flex-direction: column; gap: 18px">
+  <div style="display: flex; align-items: baseline; gap: 14px">
+    <h1 style="margin: 0; font-size: 24px; font-weight: 700">Mascot moods</h1>
+    <span style="font-size: 14px; color: #4E5C54">Pomeranian, drawn from your dog · name TBD</span>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px">
+    <div style="background: #FFFFFF; border-radius: 18px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center">
+      <dc-import name="Mascot" mood="watch" size="110" hint-size="110px,110px"></dc-import>
+      <span style="font-size: 14px; font-weight: 700">Watchful</span><span style="font-size: 12px; color: #4E5C54">Dashboard</span>
+    </div>
+    <div style="background: #FFFFFF; border-radius: 18px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center">
+      <dc-import name="Mascot" mood="cheer" size="110" hint-size="110px,110px"></dc-import>
+      <span style="font-size: 14px; font-weight: 700">Cheering</span><span style="font-size: 12px; color: #4E5C54">Payments, milestones</span>
+    </div>
+    <div style="background: #FFFFFF; border-radius: 18px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center">
+      <dc-import name="Mascot" mood="concern" size="110" hint-size="110px,110px"></dc-import>
+      <span style="font-size: 14px; font-weight: 700">Gently concerned</span><span style="font-size: 12px; color: #4E5C54">Due soon / overdue</span>
+    </div>
+    <div style="background: #FFFFFF; border-radius: 18px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center">
+      <dc-import name="Mascot" mood="hide" size="110" hint-size="110px,110px"></dc-import>
+      <span style="font-size: 14px; font-weight: 700">Covering eyes</span><span style="font-size: 12px; color: #4E5C54">Balances hidden</span>
+    </div>
+    <div style="background: #FFFFFF; border-radius: 18px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center">
+      <dc-import name="Mascot" mood="sleep" size="110" hint-size="110px,110px"></dc-import>
+      <span style="font-size: 14px; font-weight: 700">Sleeping</span><span style="font-size: 12px; color: #4E5C54">App locked</span>
+    </div>
+    <div style="background: #FFFFFF; border-radius: 18px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center">
+      <dc-import name="Mascot" mood="think" size="110" hint-size="110px,110px"></dc-import>
+      <span style="font-size: 14px; font-weight: 700">Thinking</span><span style="font-size: 12px; color: #4E5C54">Strategy, what-if</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

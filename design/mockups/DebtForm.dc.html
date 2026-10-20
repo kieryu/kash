@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kash — Add a card</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5B47}a:hover{color:#143F31}
+.noscroll{scrollbar-width:none}.noscroll::-webkit-scrollbar{display:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F3F5EF; color: #142019; font-family: 'DM Sans', sans-serif; display: flex; flex-direction: column">
+  <div style="display: flex; align-items: center; gap: 8px; padding: 48px 16px 8px">
+    <a href="AddDebts.dc.html" aria-label="Back" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#142019" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <h1 style="margin: 0; font-size: 20px; font-weight: 700">Add a debt</h1>
+  </div>
+  <div class="noscroll" style="flex-grow: 1; min-height: 0; overflow-y: auto; padding: 8px 24px 16px; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 18px">
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; padding: 3px; border-radius: 11px; background: #E3E9E1" role="group" aria-label="Debt type">
+      <button aria-pressed="true" style="font-family: inherit; font-size: 13px; font-weight: 700; height: 30px; padding: 0; border-radius: 8px; border: none; background: #1E5B47; color: #FFFFFF; white-space: nowrap">Card</button>
+      <button aria-pressed="false" style="font-family: inherit; font-size: 13px; font-weight: 500; height: 30px; padding: 0; border-radius: 8px; border: none; background: transparent; color: #142019; white-space: nowrap">Installment</button>
+      <button aria-pressed="false" style="font-family: inherit; font-size: 13px; font-weight: 500; height: 30px; padding: 0; border-radius: 8px; border: none; background: transparent; color: #142019; white-space: nowrap">Loan</button>
+      <button aria-pressed="false" style="font-family: inherit; font-size: 13px; font-weight: 500; height: 30px; padding: 0; border-radius: 8px; border: none; background: transparent; color: #142019; white-space: nowrap">Other</button>
+    </div>
+    <div style="padding: 2px 0 4px">
+      <div style="position: relative; overflow: hidden; width: 100%; height: 168px; box-sizing: border-box; border-radius: 18px; background: {{color}}; color: #FFFFFF; padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 10px 24px rgba(20, 32, 25, 0.18)">
+        <svg width="220" height="220" viewBox="0 0 220 220" aria-hidden="true" style="position: absolute; right: -70px; top: -60px">
+          <circle cx="110" cy="110" r="108" fill="#FFFFFF" fill-opacity="0.07"></circle>
+          <circle cx="110" cy="110" r="70" fill="#FFFFFF" fill-opacity="0.06"></circle>
+        </svg>
+        <div style="position: relative; display: flex; justify-content: space-between; align-items: center">
+          <span style="font-size: 15px; font-weight: 700; letter-spacing: 0.2px">{{issuer}}</span>
+          <span style="font-size: 11px; font-weight: 500; opacity: 0.85">Credit card</span>
+        </div>
+        <svg width="32" height="24" viewBox="0 0 38 28" aria-hidden="true" style="position: relative">
+          <rect x="0.5" y="0.5" width="37" height="27" rx="5" fill="#E9C77B" stroke="#C9A55A"></rect>
+          <path d="M0 10h12M0 18h12M26 10h12M26 18h12M12 0v28M26 0v28" stroke="#C9A55A" stroke-width="1"></path>
+        </svg>
+        <div style="position: relative; display: flex; justify-content: space-between; align-items: flex-end">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 12px; opacity: 0.85">Everyday Card</span>
+            <span style="font-size: 22px; font-weight: 700; letter-spacing: -0.3px">₱18,450</span>
+          </div>
+          <span style="font-size: 13px; font-weight: 700; font-style: italic; letter-spacing: 0.5px; opacity: 0.9">{{network}}</span>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 13px; font-weight: 700; color: #4E5C54">Card template</div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{templates}}" as="t" hint-placeholder-count="6">
+          <button onClick="{{t.pick}}" aria-pressed="{{t.pressed}}" style="font-family: inherit; text-align: left; width: 100%; height: 58px; box-sizing: border-box; border-radius: 12px; padding: 8px 10px; background: {{t.bg}}; color: #FFFFFF; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; border: {{t.border}}">
+            <span style="font-size: 12px; font-weight: 700">{{t.issuer}}</span>
+            <span style="font-size: 11px; opacity: 0.9">{{t.network}}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between">
+        <div style="display: flex; gap: 6px; align-items: center">
+          <sc-for list="{{swatches}}" as="s" hint-placeholder-count="6">
+            <button onClick="{{s.pick}}" aria-label="{{s.label}}" style="flex-shrink: 0; width: 30px; height: 30px; min-width: 30px; box-sizing: border-box; border-radius: 50%; cursor: pointer; background: {{s.hex}}; border: {{s.border}}; padding: 0"></button>
+          </sc-for>
+        </div>
+        <label style="flex-shrink: 0; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: #142019; cursor: pointer">
+          <span style="position: relative; width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; background: conic-gradient(#E5484D, #E9A23B, #F2D649, #3FAE6A, #2F80ED, #8E5BD9, #E5484D); border: {{customBorder}}; display: block">
+            <span style="position: absolute; inset: 7px; border-radius: 50%; background: {{color}}; display: block"></span>
+            <input type="color" value="{{colorLower}}" onChange="{{onCustom}}" aria-label="Pick a custom card color" style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: none; padding: 0">
+          </span>
+          Custom
+        </label>
+      </div>
+    </div>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #4E5C54">Nickname
+      <input value="Everyday Card" style="height: 48px; box-sizing: border-box; border-radius: 12px; border: 1.5px solid #C9D6CD; padding: 0 14px; font-family: inherit; font-size: 16px; color: #142019; background: #FFFFFF">
+    </label>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #4E5C54">Current balance
+        <input value="₱18,450.00" inputmode="decimal" style="height: 48px; box-sizing: border-box; border-radius: 12px; border: 1.5px solid #C9D6CD; padding: 0 14px; font-family: inherit; font-size: 16px; color: #142019; background: #FFFFFF">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #4E5C54">Interest / month
+        <input value="3.00%" inputmode="decimal" style="height: 48px; box-sizing: border-box; border-radius: 12px; border: 1.5px solid #C9D6CD; padding: 0 14px; font-family: inherit; font-size: 16px; color: #142019; background: #FFFFFF">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #4E5C54">Minimum payment
+        <input value="₱850.00" inputmode="decimal" style="height: 48px; box-sizing: border-box; border-radius: 12px; border: 1.5px solid #C9D6CD; padding: 0 14px; font-family: inherit; font-size: 16px; color: #142019; background: #FFFFFF">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #4E5C54">Due day
+        <input value="28th" style="height: 48px; box-sizing: border-box; border-radius: 12px; border: 1.5px solid #C9D6CD; padding: 0 14px; font-family: inherit; font-size: 16px; color: #142019; background: #FFFFFF">
+      </label>
+    </div>
+    <div style="font-size: 13px; color: #4E5C54">= 36% a year. Statement day, credit limit and promo rates are optional — tap “More details”.</div>
+    <div style="display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.45; color: #3A4740">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E5B47" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path></svg>
+      <span>Kash never asks for your card number, CVV or expiry. Not affiliated with any bank or card network.</span>
+    </div>
+  </div>
+  <div style="padding: 12px 24px 36px; background: #F3F5EF">
+    <a href="AddDebts.dc.html" style="height: 56px; border-radius: 16px; background: #1E5B47; color: #FFFFFF; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none">Save debt</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tpl: 'bdo-visa', color: '#1C3D73' };
+  }
+  renderVals() {
+    var self = this;
+    var tpls = [
+      { id: 'bdo-visa', issuer: 'BDO', network: 'Visa', bg: '#1C3D73' },
+      { id: 'bdo-mc', issuer: 'BDO', network: 'Mastercard', bg: '#22314F' },
+      { id: 'bpi-visa', issuer: 'BPI', network: 'Visa', bg: '#8E1B2C' },
+      { id: 'ub-mc', issuer: 'UnionBank', network: 'Mastercard', bg: '#B24E1A' },
+      { id: 'metro-visa', issuer: 'Metrobank', network: 'Visa', bg: '#2A4C9B' },
+      { id: 'custom', issuer: 'Custom', network: 'Any card', bg: '#4E5C54' }
+    ];
+    var state = this.state;
+    var templates = tpls.map(function (t) {
+      var sel = t.id === state.tpl;
+      return Object.assign({}, t, {
+        pressed: sel ? 'true' : 'false',
+        border: sel ? '3px solid #E9A23B' : '3px solid transparent',
+        pick: function () { self.setState({ tpl: t.id, color: t.bg }); }
+      });
+    });
+    var hexes = ['#1C3D73', '#1E5B47', '#8E1B2C', '#B24E1A', '#5B3A8C', '#2B2B2B'];
+    var swatches = hexes.map(function (h) {
+      return {
+        hex: h,
+        label: 'Card color ' + h,
+        border: h === state.color ? '3px solid #E9A23B' : '2px solid #FFFFFF',
+        pick: function () { self.setState({ color: h }); }
+      };
+    });
+    var cur = tpls.filter(function (t) { return t.id === state.tpl; })[0] || tpls[0];
+    return {
+      templates: templates,
+      swatches: swatches,
+      color: state.color,
+      colorLower: state.color.toLowerCase(),
+      customBorder: hexes.indexOf(state.color) === -1 ? '3px solid #E9A23B' : '2px solid #FFFFFF',
+      onCustom: function (e) { self.setState({ color: e.target.value.toUpperCase() }); },
+      issuer: cur.id === 'custom' ? 'My bank' : cur.issuer,
+      network: cur.id === 'custom' ? '' : cur.network
+    };
+  }
+}
+</script>
+</body>
+</html>

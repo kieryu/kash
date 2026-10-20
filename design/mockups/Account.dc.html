@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kash — Debt detail</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5B47}a:hover{color:#143F31}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F3F5EF; color: #142019; font-family: 'DM Sans', sans-serif; display: flex; flex-direction: column">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 44px 16px 8px">
+    <a href="Dashboard.dc.html" aria-label="Back" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#142019" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <button style="height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid #C9D6CD; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 700; color: #1E5B47">Edit</button>
+  </div>
+  <div style="flex-grow: 1; overflow-y: auto; padding: 4px 20px 20px; display: flex; flex-direction: column; gap: 16px">
+    <div style="background: #1C3D73; color: #FFFFFF; border-radius: 22px; height: 170px; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; justify-content: space-between">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start">
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <div style="font-size: 13px; color: #C9D6EC">BDO · Credit card</div>
+          <div style="font-size: 19px; font-weight: 700">Everyday Card</div>
+        </div>
+        <div style="font-size: 13px; font-weight: 700; letter-spacing: 1px; color: #C9D6EC">VISA</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline">
+          <div style="font-size: 26px; font-weight: 700">₱8,210</div>
+          <div style="font-size: 13px; color: #C9D6EC">of ₱18,450 · 55% paid</div>
+        </div>
+        <div style="height: 6px; border-radius: 3px; background: rgba(255,255,255,0.25)"><div style="width: 55%; height: 100%; border-radius: 3px; background: #FFFFFF"></div></div>
+      </div>
+    </div>
+    <div style="background: #FFFFFF; border-radius: 20px; padding: 18px; display: flex; align-items: center; gap: 14px">
+      <dc-import name="Mascot" mood="cheer" size="68" hint-size="68px,68px"></dc-import>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 22px; font-weight: 700; color: #1E5B47">68 days</div>
+        <div style="font-size: 14px; color: #3A4740">until this card is paid off — around Dec 27. It’s your focus debt.</div>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+      <div style="background: #FFFFFF; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; color: #4E5C54">Interest</span><span style="font-size: 16px; font-weight: 700">3% / mo · 36% / yr</span></div>
+      <div style="background: #FFFFFF; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; color: #4E5C54">Minimum</span><span style="font-size: 16px; font-weight: 700">₱850</span></div>
+      <div style="background: #FFFFFF; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; color: #4E5C54">Statement day</span><span style="font-size: 16px; font-weight: 700">3rd</span></div>
+      <div style="background: #FFFFFF; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; color: #4E5C54">Due day</span><span style="font-size: 16px; font-weight: 700">28th</span></div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+      <button style="height: 52px; border-radius: 14px; border: none; background: #1E5B47; color: #FFFFFF; font-family: inherit; font-size: 15px; font-weight: 700">Log a payment</button>
+      <a href="CheckIn.dc.html" style="height: 52px; box-sizing: border-box; border-radius: 14px; border: 1.5px solid #C9D6CD; background: #FFFFFF; color: #1E5B47; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none">Update balance</a>
+    </div>
+    <div style="background: #FFFFFF; border-radius: 20px; padding: 6px 16px">
+      <h2 style="margin: 0; padding: 12px 0 6px; font-size: 17px; font-weight: 700">History</h2>
+      <sc-for list="{{history}}" as="h" hint-placeholder-count="4">
+        <div style="display: flex; align-items: center; justify-content: space-between; min-height: 52px; border-top: 1px solid #ECEFE9">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 15px; font-weight: 500">{{h.label}}</span>
+            <span style="font-size: 12px; color: #4E5C54">{{h.date}}</span>
+          </div>
+          <span style="font-size: 15px; font-weight: 700; color: {{h.color}}">{{h.amount}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font-size: 12px; color: #4E5C54; text-align: center">Dates and amounts are estimates. <a href="Compare.dc.html">How is this calculated?</a></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      history: [
+        { label: 'Statement update · interest', date: 'Oct 3', amount: '+₱312', color: '#8A4A12' },
+        { label: 'Payment', date: 'Sep 26', amount: '−₱5,535', color: '#1E5B47' },
+        { label: 'Statement update · interest', date: 'Sep 3', amount: '+₱471', color: '#8A4A12' },
+        { label: 'Payment', date: 'Aug 27', amount: '−₱5,000', color: '#1E5B47' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

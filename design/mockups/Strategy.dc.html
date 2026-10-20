@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kash — Choose a strategy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5B47}a:hover{color:#143F31}
+.noscroll{scrollbar-width:none}.noscroll::-webkit-scrollbar{display:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F3F5EF; color: #142019; font-family: 'DM Sans', sans-serif; display: flex; flex-direction: column; padding: 56px 0 36px; gap: 24px">
+  <div style="display: flex; gap: 6px; padding: 0 24px" aria-label="Step 3 of 5">
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #1E5B47"></div>
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #1E5B47"></div>
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #1E5B47"></div>
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #D5DDD3"></div>
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #D5DDD3"></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 10px; padding: 0 24px">
+    <h1 style="margin: 0; font-size: 26px; font-weight: 700; line-height: 1.15; letter-spacing: -0.4px">How do you want to pay it off?</h1>
+    <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #4E5C54">Swipe to compare, tap to choose. You can switch anytime.</p>
+  </div>
+  <div class="noscroll" style="display: flex; gap: 14px; overflow-x: auto; padding: 4px 24px 4px; scroll-padding: 0 24px; scroll-snap-type: x mandatory">
+    <sc-for list="{{cards}}" as="c" hint-placeholder-count="3">
+      <button onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="flex-shrink: 0; width: 286px; box-sizing: border-box; scroll-snap-align: center; text-align: left; font-family: inherit; color: inherit; background: #FFFFFF; border-radius: 22px; padding: 20px; cursor: pointer; display: flex; flex-direction: column; gap: 14px; border: {{c.border}}">
+        <div style="height: 132px; border-radius: 16px; background: {{c.tint}}; display: flex; align-items: center; justify-content: center">
+          <sc-if value="{{c.isSnow}}" hint-placeholder-val="{{ true }}">
+            <svg width="190" height="96" viewBox="0 0 190 96" aria-hidden="true">
+              <path d="M8 84 H182" stroke="#A9C3B5" stroke-width="2"></path>
+              <circle cx="30" cy="76" r="8" fill="#FFFFFF" stroke="#1E5B47" stroke-width="3"></circle>
+              <circle cx="78" cy="68" r="16" fill="#FFFFFF" stroke="#1E5B47" stroke-width="3"></circle>
+              <circle cx="146" cy="52" r="32" fill="#FFFFFF" stroke="#1E5B47" stroke-width="3"></circle>
+              <path d="M44 62 l12 -4 M100 46 l12 -6" stroke="#1E5B47" stroke-width="3" stroke-linecap="round"></path>
+            </svg>
+          </sc-if>
+          <sc-if value="{{c.isAval}}" hint-placeholder-val="{{ false }}">
+            <svg width="190" height="96" viewBox="0 0 190 96" aria-hidden="true">
+              <path d="M10 10 L70 40 L120 62 L180 88 L10 88 Z" fill="#FFFFFF" stroke="#1E5B47" stroke-width="3" stroke-linejoin="round"></path>
+              <text x="26" y="34" font-size="16" font-weight="700" fill="#1E5B47" font-family="DM Sans, sans-serif">36%</text>
+              <text x="80" y="76" font-size="13" font-weight="700" fill="#1E5B47" font-family="DM Sans, sans-serif">24%</text>
+              <text x="138" y="84" font-size="11" font-weight="700" fill="#1E5B47" font-family="DM Sans, sans-serif">0%</text>
+            </svg>
+          </sc-if>
+          <sc-if value="{{c.isCustom}}" hint-placeholder-val="{{ false }}">
+            <svg width="190" height="96" viewBox="0 0 190 96" aria-hidden="true">
+              <rect x="30" y="8" width="130" height="22" rx="8" fill="#FFFFFF" stroke="#1E5B47" stroke-width="2.5"></rect>
+              <rect x="44" y="37" width="130" height="22" rx="8" fill="#FFFFFF" stroke="#1E5B47" stroke-width="2.5"></rect>
+              <rect x="30" y="66" width="130" height="22" rx="8" fill="#FFFFFF" stroke="#1E5B47" stroke-width="2.5"></rect>
+              <path d="M42 16 h10 M42 22 h10 M56 45 h10 M56 51 h10 M42 74 h10 M42 80 h10" stroke="#1E5B47" stroke-width="2" stroke-linecap="round"></path>
+            </svg>
+          </sc-if>
+          <sc-if value="{{c.isCost}}" hint-placeholder-val="{{ false }}">
+            <svg width="190" height="96" viewBox="0 0 190 96" aria-hidden="true">
+              <circle cx="60" cy="56" r="30" fill="#FFFFFF" stroke="#8A5A12" stroke-width="3"></circle>
+              <text x="60" y="64" text-anchor="middle" font-size="22" font-weight="700" fill="#8A5A12" font-family="DM Sans, sans-serif">₱</text>
+              <path d="M110 70 L130 44 L148 58 L176 22" fill="none" stroke="#8A5A12" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </sc-if>
+          <sc-if value="{{c.isHybrid}}" hint-placeholder-val="{{ false }}">
+            <svg width="190" height="96" viewBox="0 0 190 96" aria-hidden="true">
+              <circle cx="34" cy="70" r="10" fill="#FFFFFF" stroke="#8A5A12" stroke-width="3"></circle>
+              <circle cx="70" cy="62" r="18" fill="#FFFFFF" stroke="#8A5A12" stroke-width="3"></circle>
+              <path d="M104 22 L140 50 L182 84 L104 84 Z" fill="#FFFFFF" stroke="#8A5A12" stroke-width="3" stroke-linejoin="round"></path>
+            </svg>
+          </sc-if>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <div style="font-size: 19px; font-weight: 700">{{c.name}}</div>
+          <sc-if value="{{c.pro}}" hint-placeholder-val="{{ false }}">
+            <span style="font-size: 12px; font-weight: 700; color: #6E430A; background: #FCEBCB; border-radius: 999px; padding: 4px 10px">PRO</span>
+          </sc-if>
+          <sc-if value="{{c.selected}}" hint-placeholder-val="{{ false }}">
+            <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#1E5B47"></circle><path d="M7 12.5l3.2 3L17 9" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </sc-if>
+        </div>
+        <div style="font-size: 15px; line-height: 1.45; color: #3A4740">{{c.how}}</div>
+        <div style="font-size: 13px; font-weight: 700; color: #1E5B47">{{c.best}}</div>
+      </button>
+    </sc-for>
+  </div>
+  <div style="display: flex; justify-content: center; gap: 6px" aria-hidden="true">
+    <sc-for list="{{cards}}" as="d" hint-placeholder-count="5">
+      <span style="height: 6px; border-radius: 3px; width: {{d.dotW}}; background: {{d.dotBg}}"></span>
+    </sc-for>
+  </div>
+  <div style="padding: 0 24px">
+    <button style="font-family: inherit; font-size: 15px; font-weight: 700; color: #1E5B47; background: none; border: none; padding: 10px 0; cursor: pointer; text-decoration: underline">Not sure? Help me choose</button>
+  </div>
+  <div style="flex-grow: 1"></div>
+  <div style="padding: 0 24px">
+    <a href="AddDebts.dc.html" style="height: 56px; border-radius: 16px; background: #1E5B47; color: #FFFFFF; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none">Use {{selectedName}}</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { picked: 'snow' };
+  }
+  renderVals() {
+    var self = this;
+    var list = [
+      { id: 'snow', name: 'Snowball', how: 'Pay the smallest balance first. Each debt you clear rolls its payment into the next.', best: 'Best if quick wins keep you going', pro: false, tint: '#E2EEE7' },
+      { id: 'aval', name: 'Avalanche', how: 'Pay the highest interest rate first. You pay the least interest overall.', best: 'Best if saving money matters most', pro: false, tint: '#E2EEE7' },
+      { id: 'custom', name: 'My own order', how: 'Drag your debts into the order you want — for example, a family loan first.', best: 'Best if you have your own reasons', pro: false, tint: '#E2EEE7' },
+      { id: 'cost', name: 'Highest cost', how: 'Pay the debt costing you the most pesos in interest this month.', best: 'A practical middle ground', pro: true, tint: '#FCF3E3' },
+      { id: 'hybrid', name: 'Hybrid', how: 'Clear one or two small debts for momentum, then switch to Avalanche.', best: 'Motivation first, savings after', pro: true, tint: '#FCF3E3' }
+    ];
+    var picked = this.state.picked;
+    var cards = list.map(function (s) {
+      var sel = s.id === picked;
+      return Object.assign({}, s, {
+        selected: sel,
+        pressed: sel ? 'true' : 'false',
+        border: sel ? '3px solid #1E5B47' : '3px solid #FFFFFF',
+        dotW: sel ? '20px' : '6px',
+        dotBg: sel ? '#1E5B47' : '#B7C2BB',
+        isSnow: s.id === 'snow', isAval: s.id === 'aval', isCustom: s.id === 'custom', isCost: s.id === 'cost', isHybrid: s.id === 'hybrid',
+        pick: function () { self.setState({ picked: s.id }); }
+      });
+    });
+    var current = list.filter(function (s) { return s.id === picked; })[0];
+    return { cards: cards, selectedName: current ? current.name : 'Snowball' };
+  }
+}
+</script>
+</body>
+</html>

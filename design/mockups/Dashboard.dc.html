@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kash — Dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5B47}a:hover{color:#143F31}
+.noscroll{scrollbar-width:none}.noscroll::-webkit-scrollbar{display:none}
+</style>
+</helmet>
+<div style="position: relative; overflow: hidden; width: 390px; height: 844px; box-sizing: border-box; background: #F3F5EF; color: #142019; font-family: 'DM Sans', sans-serif; display: flex; flex-direction: column">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 44px 20px 8px">
+    <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.4px; color: #1E5B47">Kash</div>
+    <button onClick="{{toggleHide}}" aria-pressed="{{hidePressed}}" aria-label="Hide balances" style="height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid #C9D6CD; background: #FFFFFF; display: flex; align-items: center; gap: 6px; font-family: inherit; font-size: 13px; font-weight: 700; color: #1E5B47; cursor: pointer">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E5B47" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+      {{hideLabel}}
+    </button>
+  </div>
+  <div class="noscroll" style="flex-grow: 1; min-height: 0; overflow-y: auto; padding: 8px 20px 20px; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 16px">
+    <div style="background: #1E5B47; color: #FFFFFF; border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <div style="font-size: 13px; color: #CFE3D8">Debt-free by</div>
+          <div style="font-size: 26px; font-weight: 700; line-height: 1.1; letter-spacing: -0.4px">December 2027</div>
+          <div style="font-size: 13px; color: #CFE3D8">in about 1 year 2 months · on track</div>
+        </div>
+        <dc-import name="Mascot" mood="{{mood}}" size="68" hint-size="68px,68px"></dc-import>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div style="height: 8px; border-radius: 4px; background: #2F7660; overflow: hidden"><div style="width: 18%; height: 100%; background: #E9A23B; border-radius: 4px"></div></div>
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #CFE3D8"><span>{{paidTotal}} paid · 18%</span><span>{{remaining}} left</span></div>
+      </div>
+      <div style="align-self: flex-start; font-size: 12px; font-weight: 700; color: #2E1C04; background: #F4CF8E; border-radius: 999px; padding: 5px 10px">{{movement}}</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 700">October payments</h2>
+        <div style="font-size: 13px; color: #4E5C54">{{paidCount}} of 4 paid · {{total}}</div>
+      </div>
+
+      <div style="background: #FFFFFF; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; border: 2px solid #E9A23B">
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; color: #8A5A12">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A5A12" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle></svg>
+          FOCUS DEBT · PAY EXTRA HERE
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+          <div style="display: flex; gap: 10px; align-items: center">
+            <span style="width: 8px; height: 36px; border-radius: 4px; background: #1C3D73"></span>
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 15px; font-weight: 700">Everyday Card</span>
+              <span style="font-size: 12px; color: #4E5C54">Due Oct 28 · in 8 days</span>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px">
+            <span style="font-size: 20px; font-weight: 700">{{focus.amount}}</span>
+            <span style="font-size: 11px; color: #4E5C54">{{focus.split}}</span>
+          </div>
+        </div>
+        <sc-if value="{{focus.isPaid}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; border-radius: 12px; background: #E2EEE7; padding: 4px 6px 4px 14px">
+            <span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: #1E5B47">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E5B47" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4L19 7"></path></svg>{{focus.paidText}}</span>
+            <button onClick="{{focus.undo}}" style="height: 36px; padding: 0 12px; border: none; background: none; font-family: inherit; font-size: 13px; font-weight: 700; color: #1E5B47; cursor: pointer; text-decoration: underline">Undo</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{focus.notPaid}}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{focus.open}}" style="height: 44px; border-radius: 12px; border: none; background: #1E5B47; color: #FFFFFF; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Log payment</button>
+        </sc-if>
+      </div>
+
+      <div style="background: #FFFFFF; border-radius: 18px; padding: 4px 16px">
+        <div style="font-size: 12px; font-weight: 700; color: #4E5C54; padding: 10px 0 4px">Minimum payments</div>
+        <sc-for list="{{rows}}" as="p" hint-placeholder-count="3">
+          <div style="display: flex; align-items: center; gap: 10px; min-height: 60px; border-top: 1px solid #ECEFE9">
+            <span style="width: 8px; height: 32px; border-radius: 4px; background: {{p.color}}; flex-shrink: 0"></span>
+            <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0">
+              <span style="font-size: 14px; font-weight: 700">{{p.name}}</span>
+              <span style="font-size: 12px; color: #4E5C54">{{p.sub}}</span>
+            </div>
+            <sc-if value="{{p.isPaid}}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{p.undo}}" aria-label="{{p.undoLabel}}" style="flex-shrink: 0; height: 44px; padding: 0 12px; border-radius: 999px; border: none; background: #E2EEE7; color: #1E5B47; font-family: inherit; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 4px; cursor: pointer">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E5B47" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4L19 7"></path></svg>Paid</button>
+            </sc-if>
+            <sc-if value="{{p.showAuto}}" hint-placeholder-val="{{ false }}">
+              <span style="flex-shrink: 0; font-size: 12px; color: #4E5C54; padding: 0 4px">Auto-deducted</span>
+            </sc-if>
+            <sc-if value="{{p.showPay}}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{p.open}}" aria-label="{{p.payLabel}}" style="flex-shrink: 0; height: 44px; padding: 0 14px; border-radius: 999px; border: 1.5px solid #C9D6CD; background: #FFFFFF; color: #1E5B47; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer">Log</button>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <button onClick="{{openExtra}}" style="display: flex; align-items: center; gap: 12px; text-align: left; font-family: inherit; color: #142019; background: #FFFFFF; border: 1.5px dashed #8FB09F; border-radius: 16px; padding: 12px 14px; cursor: pointer">
+        <span style="width: 36px; height: 36px; border-radius: 50%; background: #FCF3E3; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A5A12" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 14px; font-weight: 700">Log an extra payment</span>
+          <span style="font-size: 12px; color: #4E5C54">Bonus, 13th month pay, side income</span>
+        </span>
+      </button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 700">Your debts</h2>
+        <a href="Compare.dc.html" style="font-size: 13px; font-weight: 700">Compare strategies</a>
+      </div>
+      <div class="noscroll" style="display: flex; gap: 10px; overflow-x: auto">
+        <sc-for list="{{cards}}" as="c" hint-placeholder-count="4">
+          <a href="Account.dc.html" style="flex-shrink: 0; width: 148px; height: 92px; box-sizing: border-box; border-radius: 16px; padding: 12px; background: {{c.color}}; color: #FFFFFF; text-decoration: none; display: flex; flex-direction: column; justify-content: space-between">
+            <span style="font-size: 13px; font-weight: 700">{{c.name}}</span>
+            <span style="display: flex; flex-direction: column; gap: 6px">
+              <span style="font-size: 16px; font-weight: 700">{{c.balanceText}}</span>
+              <span style="height: 4px; border-radius: 2px; background: rgba(255,255,255,0.3)"><span style="display: block; height: 100%; width: {{c.pct}}; background: #FFFFFF; border-radius: 2px"></span></span>
+            </span>
+          </a>
+        </sc-for>
+      </div>
+    </div>
+    <div style="font-size: 12px; color: #4E5C54; text-align: center">Interest this month ≈ {{interest}} · estimate</div>
+  </div>
+  <nav style="display: flex; justify-content: space-around; border-top: 1px solid #DDE3DA; background: #FFFFFF; padding: 8px 8px 24px" aria-label="Main">
+    <a href="Dashboard.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: #1E5B47; text-decoration: none; min-width: 64px; padding-top: 4px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1E5B47" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg>Home</a>
+    <a href="Compare.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: #4E5C54; text-decoration: none; min-width: 64px; padding-top: 4px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4E5C54" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"></path></svg>Plan</a>
+    <a href="Account.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: #4E5C54; text-decoration: none; min-width: 64px; padding-top: 4px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4E5C54" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"></rect><path d="M3 10h18"></path></svg>Debts</a>
+    <a href="Settings.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: #4E5C54; text-decoration: none; min-width: 64px; padding-top: 4px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4E5C54" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"></path></svg>Settings</a>
+  </nav>
+
+  <sc-if value="{{sheet.open}}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{sheet.close}}" aria-label="Close" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; border: none; padding: 0; background: rgba(20, 32, 25, 0.45); cursor: default"></button>
+    <div role="dialog" aria-label="{{sheet.title}}" style="position: absolute; left: 0; right: 0; bottom: 0; background: #FFFFFF; border-radius: 24px 24px 0 0; padding: 10px 20px 28px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 -8px 24px rgba(20, 32, 25, 0.15)">
+      <div style="align-self: center; width: 40px; height: 4px; border-radius: 2px; background: #D5DDD3"></div>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <h2 style="margin: 0; font-size: 19px; font-weight: 700">{{sheet.title}}</h2>
+          <span style="font-size: 13px; color: #4E5C54">{{sheet.hint}}</span>
+        </div>
+        <span style="font-size: 12px; color: #4E5C54; padding-top: 4px; white-space: nowrap">Today, Oct 20</span>
+      </div>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #4E5C54">Amount you paid
+        <span style="display: flex; align-items: center; height: 60px; border-radius: 14px; border: 2px solid #1E5B47; padding: 0 14px; gap: 6px; background: #FFFFFF">
+          <span style="font-size: 24px; font-weight: 700; color: #142019">₱</span>
+          <input value="{{sheet.amountText}}" onChange="{{sheet.onType}}" inputmode="numeric" style="flex-grow: 1; min-width: 0; border: none; outline: none; font-family: inherit; font-size: 24px; font-weight: 700; color: #142019; background: transparent; padding: 0">
+        </span>
+      </label>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <sc-for list="{{sheet.chips}}" as="q" hint-placeholder-count="4">
+          <button onClick="{{q.pick}}" aria-pressed="{{q.pressed}}" style="height: 36px; padding: 0 12px; border-radius: 999px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; background: {{q.bg}}; color: {{q.fg}}; border: 1.5px solid {{q.line}}">{{q.label}}</button>
+        </sc-for>
+      </div>
+      <div style="border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.45; background: {{sheet.toneBg}}; color: {{sheet.toneFg}}">{{sheet.impact}}</div>
+      <button onClick="{{sheet.save}}" style="height: 54px; border-radius: 16px; border: none; background: #1E5B47; color: #FFFFFF; font-family: inherit; font-size: 16px; font-weight: 700; cursor: pointer">Save payment</button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { hide: false, paid: { ate: 1000 }, extra: 0, sheet: null, amount: 0 };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state;
+    var hide = st.hide;
+    var fmt = function (v) { return v.toLocaleString('en-PH'); };
+    var peso = function (v) { return hide ? '₱ • • • •' : '₱' + fmt(v); };
+    var debts = {
+      every: { name: 'Everyday Card', planned: 5535, min: 850, balance: 8210, next: 'Ate’s loan' },
+      ate: { name: 'Ate’s loan', planned: 1000, min: 1000, balance: 23000, next: '' },
+      travel: { name: 'Travel Card', planned: 2115, min: 2115, balance: 36370, next: '' },
+      extra: { name: 'Everyday Card', planned: 0, min: 0, balance: 8210 - (st.paid.every || 0), next: 'Ate’s loan' }
+    };
+    var setPaid = function (id, val) {
+      var next = Object.assign({}, st.paid);
+      if (val === null) { delete next[id]; } else { next[id] = val; }
+      return next;
+    };
+    var open = function (id) {
+      return function () { self.setState({ sheet: id, amount: debts[id].planned }); };
+    };
+    var undo = function (id) {
+      return function () { self.setState({ paid: setPaid(id, null) }); };
+    };
+
+    var fp = st.paid.every;
+    var fpExtra = fp ? fp - 5535 : 0;
+    var focusPaidText = !fp ? '' : (fpExtra > 0 ? 'Paid ₱' + fmt(fp) + ' · ₱' + fmt(fpExtra) + ' extra' : (fpExtra < 0 ? 'Paid ₱' + fmt(fp) + ' · ₱' + fmt(-fpExtra) + ' short' : 'Paid ₱' + fmt(fp) + ' · as planned'));
+
+    var list = [
+      { id: 'ate', due: 'Due Oct 30', color: '#5B3A8C', auto: false },
+      { id: 'travel', due: 'Due Nov 3', color: '#B24E1A', auto: false },
+      { id: 'sss', due: 'Nov 10', color: '#2B2B2B', auto: true, name: 'SSS salary loan', planned: 1350 }
+    ];
+    var rows = list.map(function (r) {
+      var d = debts[r.id] || { name: r.name, planned: r.planned };
+      var amt = st.paid[r.id];
+      var isPaid = amt !== undefined;
+      return {
+        name: d.name,
+        color: r.color,
+        sub: isPaid ? 'Paid ' + peso(amt) + ' · logged' : r.due + ' · ' + peso(d.planned),
+        isPaid: isPaid,
+        showAuto: !isPaid && r.auto,
+        showPay: !isPaid && !r.auto,
+        payLabel: 'Log payment for ' + d.name,
+        undoLabel: d.name + ' paid. Tap to undo',
+        open: open(r.id),
+        undo: undo(r.id)
+      };
+    });
+
+    var sheet = { open: false };
+    if (st.sheet) {
+      var id = st.sheet;
+      var d = debts[id];
+      var amt = st.amount || 0;
+      var isExtra = id === 'extra';
+      var diff = amt - d.planned;
+      var days = Math.max(1, Math.round((isExtra ? amt : diff) / 8400 * 30));
+      var impact, good = true;
+      if (amt <= 0) { impact = 'Enter the amount you paid.'; good = false; }
+      else if (amt >= d.balance) { impact = 'This clears ' + d.name + '! ' + (d.next ? 'Your extra money moves to ' + d.next + ' next.' : 'One debt down.'); }
+      else if (isExtra) { impact = '₱' + fmt(amt) + ' extra goes to your focus debt — about ' + days + (days === 1 ? ' day' : ' days') + ' closer to debt-free.'; }
+      else if (amt < d.min) { impact = 'That’s below the ₱' + fmt(d.min) + ' minimum. Paying at least the minimum avoids late fees.'; good = false; }
+      else if (diff > 0) { impact = '₱' + fmt(diff) + ' more than planned — about ' + days + (days === 1 ? ' day' : ' days') + ' closer to debt-free.'; }
+      else if (diff < 0) { impact = '₱' + fmt(-diff) + ' less than planned. Your plan will adjust next month.'; good = false; }
+      else { impact = 'Right on plan. Nice.'; }
+      var chipDefs = isExtra
+        ? [{ label: '₱1,000', v: 1000 }, { label: '₱5,000', v: 5000 }, { label: 'Pay off ' + peso(d.balance), v: d.balance }]
+        : [{ label: 'Planned ' + peso(d.planned), v: d.planned }, { label: '+₱500', v: d.planned + 500 }, { label: '+₱1,000', v: d.planned + 1000 }, { label: 'Pay in full', v: d.balance }];
+      sheet = {
+        open: true,
+        title: isExtra ? 'Extra payment' : 'Log payment · ' + d.name,
+        hint: isExtra ? 'Goes to your focus debt: ' + d.name : (id === 'every' ? 'Planned ₱5,535 · ₱850 minimum + ₱4,685 extra' : 'Minimum due ₱' + fmt(d.min)),
+        amountText: amt ? fmt(amt) : '',
+        onType: function (e) { self.setState({ amount: parseInt(String(e.target.value).replace(/[^0-9]/g, ''), 10) || 0 }); },
+        chips: chipDefs.map(function (c) {
+          var on = c.v === amt;
+          return { label: c.label, pressed: on ? 'true' : 'false', bg: on ? '#1E5B47' : '#FFFFFF', fg: on ? '#FFFFFF' : '#142019', line: on ? '#1E5B47' : '#C9D6CD', pick: function () { self.setState({ amount: c.v }); } };
+        }),
+        impact: impact,
+        toneBg: good ? '#E2EEE7' : '#FCF3E3',
+        toneFg: good ? '#1D3A30' : '#5E3D08',
+        close: function () { self.setState({ sheet: null }); },
+        save: function () {
+          if (amt <= 0) return;
+          if (isExtra) { self.setState({ extra: st.extra + amt, sheet: null }); }
+          else { self.setState({ paid: setPaid(id, amt), sheet: null }); }
+        }
+      };
+    }
+
+    var paidCount = ['every', 'ate', 'travel'].filter(function (k) { return st.paid[k] !== undefined; }).length;
+    var extraAll = st.extra + Math.max(0, fpExtra);
+    var everyBal = Math.max(0, 8210 - (fp || 0) - st.extra);
+    var balances = [
+      { name: 'Everyday Card', bal: everyBal, orig: 18450, color: '#1C3D73' },
+      { name: 'Ate’s loan', bal: 23000, orig: 25000, color: '#5B3A8C' },
+      { name: 'SSS salary loan', bal: 27300, orig: 30000, color: '#2B2B2B' },
+      { name: 'Travel Card', bal: 36370, orig: 42300, color: '#B24E1A' }
+    ];
+    var cards = balances.map(function (b) {
+      return { name: b.name, color: b.color, balanceText: peso(b.bal), pct: Math.round((1 - b.bal / b.orig) * 100) + '%' };
+    });
+    var extraDays = Math.round(extraAll / 8400 * 30);
+    return {
+      focus: {
+        amount: peso(5535),
+        split: hide ? 'minimum + extra' : '₱850 min + ₱4,685 extra',
+        isPaid: fp !== undefined,
+        notPaid: fp === undefined,
+        paidText: focusPaidText,
+        open: open('every'),
+        undo: undo('every')
+      },
+      rows: rows,
+      sheet: sheet,
+      openExtra: open('extra'),
+      paidCount: paidCount,
+      cards: cards,
+      total: peso(10000),
+      paidTotal: peso(20870),
+      remaining: peso(94880),
+      interest: peso(1473),
+      movement: extraAll > 0 ? '↑ Your extra ₱' + fmt(extraAll) + ' moved you ~' + extraDays + ' days closer' : '↑ Last payment moved you 3 weeks closer',
+      mood: hide ? 'hide' : (extraAll > 0 ? 'cheer' : 'watch'),
+      hideLabel: hide ? 'Show' : 'Hide',
+      hidePressed: hide ? 'true' : 'false',
+      toggleHide: function () { self.setState({ hide: !hide }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

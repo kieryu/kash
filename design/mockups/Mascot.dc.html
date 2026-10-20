@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kash mascot</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="display: flex; align-items: center; justify-content: center; line-height: 0; font-family: 'DM Sans', sans-serif; color: #1E130B">
+<svg width="{{size}}" height="{{size}}" viewBox="0 0 120 120" role="img" aria-label="{{label}}">
+  <ellipse cx="60" cy="102" rx="34" ry="18" fill="#F0C391"></ellipse>
+  <path d="M32 92 Q36 84 42 90 Q46 82 52 89 Q56 81 60 88 Q64 81 68 89 Q74 82 78 90 Q84 84 88 92 Q60 110 32 92 Z" fill="#FBE6C8"></path>
+  <path d="M29 42 L31 6 Q35 4 38 8 L54 30 Z" fill="#F0C391" stroke="#DDA570" stroke-width="2" stroke-linejoin="round"></path>
+  <path d="M91 42 L89 6 Q85 4 82 8 L66 30 Z" fill="#F0C391" stroke="#DDA570" stroke-width="2" stroke-linejoin="round"></path>
+  <path d="M34 35 L34 14 L46 30 Z" fill="#D6A086"></path>
+  <path d="M86 35 L86 14 L74 30 Z" fill="#D6A086"></path>
+  <circle cx="60" cy="58" r="35" fill="#F0C391"></circle>
+  <ellipse cx="60" cy="66" rx="25" ry="21" fill="#FBE6C8"></ellipse>
+  <g opacity="{{m.open}}">
+    <circle cx="{{m.lx}}" cy="{{m.py}}" r="7" fill="#1E130B"></circle>
+    <circle cx="{{m.rx}}" cy="{{m.py}}" r="7" fill="#1E130B"></circle>
+    <circle cx="{{m.lh}}" cy="{{m.hy}}" r="2.2" fill="#FFFFFF"></circle>
+    <circle cx="{{m.rh}}" cy="{{m.hy}}" r="2.2" fill="#FFFFFF"></circle>
+  </g>
+  <g opacity="{{m.happy}}" fill="none" stroke="#1E130B" stroke-width="3.5" stroke-linecap="round">
+    <path d="M39 56 Q46 47 53 56"></path>
+    <path d="M67 56 Q74 47 81 56"></path>
+  </g>
+  <g opacity="{{m.sleep}}" fill="none" stroke="#1E130B" stroke-width="3" stroke-linecap="round">
+    <path d="M39 54 Q46 60 53 54"></path>
+    <path d="M67 54 Q74 60 81 54"></path>
+  </g>
+  <g opacity="{{m.brow}}" fill="none" stroke="#B9824E" stroke-width="3" stroke-linecap="round">
+    <path d="M37 43 L50 47"></path>
+    <path d="M83 43 L70 47"></path>
+  </g>
+  <ellipse cx="60" cy="71" rx="12" ry="9" fill="#FFF3E1"></ellipse>
+  <ellipse cx="60" cy="67" rx="5" ry="3.8" fill="#1E130B"></ellipse>
+  <g opacity="{{m.smile}}">
+    <ellipse cx="60" cy="79" rx="4.5" ry="5.5" fill="#E8708C"></ellipse>
+    <path d="M50 73 Q55 78 60 74 Q65 78 70 73" fill="none" stroke="#5A3A22" stroke-width="2.2" stroke-linecap="round"></path>
+  </g>
+  <path opacity="{{m.flat}}" d="M54 76 Q60 74 66 76" fill="none" stroke="#5A3A22" stroke-width="2.2" stroke-linecap="round"></path>
+  <path d="M36 87 Q60 97 84 87" fill="none" stroke="#E85D8A" stroke-width="5" stroke-linecap="round"></path>
+  <circle cx="60" cy="95" r="2.6" fill="#C9CED3"></circle>
+  <g opacity="{{m.coin}}">
+    <circle cx="60" cy="104" r="12" fill="#E9A23B" stroke="#A8690F" stroke-width="2"></circle>
+    <text x="60" y="109" text-anchor="middle" font-size="13" font-weight="700" fill="#6E430A" font-family="DM Sans, sans-serif">₱</text>
+    <ellipse cx="47" cy="104" rx="6.5" ry="5.5" fill="#F0C391" stroke="#DDA570" stroke-width="1.5"></ellipse>
+    <ellipse cx="73" cy="104" rx="6.5" ry="5.5" fill="#F0C391" stroke="#DDA570" stroke-width="1.5"></ellipse>
+  </g>
+  <g opacity="{{m.hide}}">
+    <ellipse cx="45" cy="54" rx="13" ry="11" fill="#F0C391" stroke="#DDA570" stroke-width="2"></ellipse>
+    <ellipse cx="75" cy="54" rx="13" ry="11" fill="#F0C391" stroke="#DDA570" stroke-width="2"></ellipse>
+    <path d="M40 46 L40 52 M45 45 L45 52 M50 46 L50 52" fill="none" stroke="#DDA570" stroke-width="1.8" stroke-linecap="round"></path>
+    <path d="M70 46 L70 52 M75 45 L75 52 M80 46 L80 52" fill="none" stroke="#DDA570" stroke-width="1.8" stroke-linecap="round"></path>
+  </g>
+  <g opacity="{{m.spark}}" fill="#E9A23B">
+    <path d="M10 70 L13 77 L20 80 L13 83 L10 90 L7 83 L0 80 L7 77 Z"></path>
+    <path d="M108 70 L110.5 76 L116.5 78.5 L110.5 81 L108 87 L105.5 81 L99.5 78.5 L105.5 76 Z"></path>
+  </g>
+  <g opacity="{{m.sleep}}" fill="#8A5A30" font-family="DM Sans, sans-serif" font-weight="700">
+    <text x="100" y="26" font-size="14">z</text>
+    <text x="110" y="16" font-size="10">z</text>
+  </g>
+  <g opacity="{{m.think}}" fill="#DDA570">
+    <circle cx="106" cy="22" r="5"></circle>
+    <circle cx="114" cy="12" r="3"></circle>
+  </g>
+</svg>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mood":{"editor":"enum","options":["watch","cheer","concern","hide","sleep","think"],"default":"watch"},"size":{"editor":"int","min":48,"max":320,"default":160},"$preview":{"width":160,"height":160}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var mood = this.props.mood || 'watch';
+    var size = Number(this.props.size) || 160;
+    var base = { open: 1, happy: 0, sleep: 0, hide: 0, brow: 0, coin: 1, smile: 1, flat: 0, spark: 0, think: 0, lx: 46, rx: 74, py: 54 };
+    var moods = {
+      watch: {},
+      cheer: { open: 0, happy: 1, spark: 1 },
+      concern: { brow: 1, smile: 0, flat: 1, py: 56 },
+      hide: { open: 0, hide: 1, coin: 0 },
+      sleep: { open: 0, sleep: 1, coin: 0, smile: 0, flat: 1 },
+      think: { lx: 48, rx: 76, py: 51, think: 1, smile: 0, flat: 1 }
+    };
+    var m = Object.assign({}, base, moods[mood] || {});
+    m.lh = m.lx + 2.5; m.rh = m.rx + 2.5; m.hy = m.py - 2.5;
+    var labels = {
+      watch: 'Pomeranian mascot smiling, holding a coin',
+      cheer: 'Pomeranian mascot cheering',
+      concern: 'Pomeranian mascot looking gently concerned',
+      hide: 'Pomeranian mascot covering its eyes — balances hidden',
+      sleep: 'Pomeranian mascot sleeping — app locked',
+      think: 'Pomeranian mascot thinking'
+    };
+    return { m: m, size: size, label: labels[mood] || labels.watch };
+  }
+}
+</script>
+</body>
+</html>

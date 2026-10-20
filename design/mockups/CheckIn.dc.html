@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kash — Statement check-in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5B47}a:hover{color:#143F31}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F3F5EF; color: #142019; font-family: 'DM Sans', sans-serif; display: flex; flex-direction: column">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 44px 16px 8px">
+    <a href="Dashboard.dc.html" aria-label="Close" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#142019" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </a>
+    <span style="font-size: 12px; font-weight: 700; color: #6E430A; background: #FCEBCB; border-radius: 999px; padding: 6px 12px">Statement day · Nov 3</span>
+  </div>
+  <div style="flex-grow: 1; padding: 8px 24px 16px; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; gap: 14px; align-items: center">
+      <dc-import name="Mascot" mood="think" size="72" hint-size="72px,72px"></dc-import>
+      <h1 style="margin: 0; font-size: 22px; font-weight: 700; line-height: 1.2">Update your Travel Card balance</h1>
+    </div>
+    <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #4E5C54">Your new statement is out. Type the balance shown on it, and Kash will adjust your plan.</p>
+    <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4E5C54; background: #FFFFFF; border-radius: 14px; padding: 14px 16px">
+      <span>Kash expected</span><span style="font-weight: 700; color: #142019">₱36,370</span>
+    </div>
+    <label style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; font-weight: 700; color: #4E5C54">Statement balance
+      <input value="₱37,639.00" inputmode="decimal" style="height: 60px; box-sizing: border-box; border-radius: 14px; border: 2px solid #1E5B47; padding: 0 16px; font-size: 22px; font-weight: 700; color: #142019; background: #FFFFFF">
+    </label>
+    <div style="background: #FFFFFF; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+      <div style="font-size: 15px"><strong>+₱1,269</strong> more than expected. What was it?</div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap" role="group" aria-label="Reason for difference">
+        <sc-for list="{{reasons}}" as="r" hint-placeholder-count="2">
+          <button onClick="{{r.pick}}" aria-pressed="{{r.pressed}}" style="font-family: inherit; font-size: 14px; font-weight: 700; height: 40px; padding: 0 14px; border-radius: 999px; cursor: pointer; background: {{r.bg}}; color: {{r.fg}}; border: 1.5px solid {{r.line}}">{{r.label}}</button>
+        </sc-for>
+      </div>
+      <div style="font-size: 14px; line-height: 1.45; color: #3A4740">{{explain}}</div>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: flex-start; background: #FCF3E3; border-radius: 14px; padding: 12px 14px; font-size: 14px; line-height: 1.45; color: #5E3D08">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A5A12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+      <span>{{impact}}</span>
+    </div>
+  </div>
+  <div style="padding: 12px 24px 36px">
+    <a href="Dashboard.dc.html" style="height: 56px; border-radius: 16px; background: #1E5B47; color: #FFFFFF; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none">Save balance</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { reason: 'interest' };
+  }
+  renderVals() {
+    var self = this;
+    var reason = this.state.reason;
+    var opts = [
+      { id: 'interest', label: 'Interest & fees' },
+      { id: 'buy', label: 'New purchases' }
+    ];
+    var reasons = opts.map(function (o) {
+      var sel = o.id === reason;
+      return {
+        label: o.label,
+        pressed: sel ? 'true' : 'false',
+        bg: sel ? '#1E5B47' : '#FFFFFF',
+        fg: sel ? '#FFFFFF' : '#142019',
+        line: sel ? '#1E5B47' : '#C9D6CD',
+        pick: function () { self.setState({ reason: o.id }); }
+      };
+    });
+    var isBuy = reason === 'buy';
+    return {
+      reasons: reasons,
+      explain: isBuy
+        ? 'Saved as new charges. Your plan now includes them.'
+        : 'Saved as interest and fees. Your projection corrects itself.',
+      impact: isBuy
+        ? 'Debt-free date moves from December 2027 to January 2028. Pausing purchases on this card gets you back on track.'
+        : 'Your debt-free date stays at December 2027.'
+    };
+  }
+}
+</script>
+</body>
+</html>

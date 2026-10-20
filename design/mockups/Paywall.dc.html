@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kash — Kash Pro</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5B47}a:hover{color:#143F31}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F3F5EF; color: #142019; font-family: 'DM Sans', sans-serif; display: flex; flex-direction: column">
+  <div style="display: flex; justify-content: flex-end; padding: 44px 16px 0">
+    <a href="Settings.dc.html" aria-label="Close" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#142019" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </a>
+  </div>
+  <div style="flex-grow: 1; padding: 0 24px; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center">
+      <dc-import name="Mascot" mood="cheer" size="110" hint-size="110px,110px"></dc-import>
+      <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.4px">Kash Pro</h1>
+      <div style="font-size: 16px; color: #4E5C54"><strong style="color: #142019">₱99 one time.</strong> No subscription, no ads.</div>
+    </div>
+    <div style="background: #FFFFFF; border-radius: 20px; padding: 6px 16px">
+      <sc-for list="{{features}}" as="f" hint-placeholder-count="6">
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 46px; border-bottom: 1px solid #ECEFE9">
+          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex-shrink: 0"><circle cx="12" cy="12" r="11" fill="#E2EEE7"></circle><path d="M7 12.5l3.2 3L17 9" fill="none" stroke="#1E5B47" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <span style="font-size: 15px">{{f}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="background: #E2EEE7; border-radius: 16px; padding: 14px 16px; font-size: 14px; line-height: 1.5; color: #1D3A30"><strong>Always free:</strong> your full payoff plan, reminders, encryption and backups. Your data is never locked.</div>
+  </div>
+  <div style="padding: 16px 24px 32px; display: flex; flex-direction: column; gap: 6px">
+    <button style="height: 56px; border-radius: 16px; border: none; background: #E9A23B; color: #2E1C04; font-family: inherit; font-size: 16px; font-weight: 700; cursor: pointer">Unlock for ₱99</button>
+    <a href="Dashboard.dc.html" style="height: 48px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; text-decoration: none">Maybe later</a>
+    <button style="background: none; border: none; font-family: inherit; font-size: 13px; color: #4E5C54; text-decoration: underline; cursor: pointer; height: 32px">Restore purchase</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      features: [
+        'Unlimited debts (free: 3)',
+        'Highest-cost and Hybrid strategies',
+        'What-if simulator',
+        'Charts and full timeline',
+        'Multiple currencies',
+        'Home-screen widget and extra card styles'
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

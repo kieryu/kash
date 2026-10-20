@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kash — Monthly budget</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5B47}a:hover{color:#143F31}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F3F5EF; color: #142019; font-family: 'DM Sans', sans-serif; display: flex; flex-direction: column; padding: 56px 24px 36px; gap: 22px">
+  <div style="display: flex; gap: 6px" aria-label="Step 5 of 5">
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #1E5B47"></div>
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #1E5B47"></div>
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #1E5B47"></div>
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #1E5B47"></div>
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #1E5B47"></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <h1 style="margin: 0; font-size: 26px; font-weight: 700; line-height: 1.15; letter-spacing: -0.4px">How much can you pay each month?</h1>
+    <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #4E5C54">Your minimums add up to <strong style="color: #142019">₱5,315</strong>. Anything above that speeds up your plan.</p>
+  </div>
+  <div style="background: #FFFFFF; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <button onClick="{{minus}}" aria-label="Lower by 500 pesos" style="width: 48px; height: 48px; border-radius: 14px; border: 1.5px solid #C9D6CD; background: #FFFFFF; font-size: 24px; color: #1E5B47; cursor: pointer; font-family: inherit">−</button>
+      <div style="font-size: 32px; font-weight: 700; letter-spacing: -0.6px">{{budgetText}}</div>
+      <button onClick="{{plus}}" aria-label="Raise by 500 pesos" style="width: 48px; height: 48px; border-radius: 14px; border: 1.5px solid #C9D6CD; background: #FFFFFF; font-size: 24px; color: #1E5B47; cursor: pointer; font-family: inherit">+</button>
+    </div>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #4E5C54">
+      <span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Monthly payoff budget</span>
+      <input type="range" min="5315" max="20000" step="100" value="{{budget}}" onChange="{{onSlide}}" style="width: 100%; accent-color: #1E5B47; height: 28px">
+      <span style="display: flex; justify-content: space-between"><span>₱5,315 minimum</span><span>₱20,000</span></span>
+    </label>
+  </div>
+  <div style="background: #1E5B47; color: #FFFFFF; border-radius: 20px; padding: 20px; display: flex; gap: 14px; align-items: center">
+    <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1">
+      <div style="font-size: 13px; color: #CFE3D8">You’ll be debt-free by</div>
+      <div style="font-size: 24px; font-weight: 700; line-height: 1.1">{{freeDate}}</div>
+      <div style="font-size: 14px; color: #CFE3D8">{{freeIn}}</div>
+    </div>
+    <dc-import name="Mascot" mood="cheer" size="84" hint-size="84px,84px"></dc-import>
+  </div>
+  <div style="display: flex; gap: 10px; align-items: center; font-size: 14px; color: #5E3D08; background: #FCF3E3; border-radius: 14px; padding: 12px 14px">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A5A12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+    <span>{{nudge}}</span>
+  </div>
+  <div style="flex-grow: 1"></div>
+  <div style="font-size: 12px; color: #4E5C54; text-align: center">Estimate only — real statements may differ.</div>
+  <a href="Dashboard.dc.html" style="height: 56px; border-radius: 16px; background: #1E5B47; color: #FFFFFF; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none">See my plan</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { budget: 10000 };
+  }
+  renderVals() {
+    var self = this;
+    var total = 115750;
+    var months = function (b) { return Math.ceil(total / Math.max(b - 1600, 100)); };
+    var names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    var b = this.state.budget;
+    var n = months(b);
+    var t = 9 + n;
+    var year = 2026 + Math.floor(t / 12);
+    var y = Math.floor(n / 12), mo = n % 12;
+    var parts = [];
+    if (y > 0) parts.push(y + (y === 1 ? ' year' : ' years'));
+    if (mo > 0) parts.push(mo + (mo === 1 ? ' month' : ' months'));
+    var saved = n - months(b + 1000);
+    var peso = function (v) { return '₱' + v.toLocaleString('en-PH'); };
+    var clamp = function (v) { return Math.min(20000, Math.max(5315, v)); };
+    return {
+      budget: b,
+      budgetText: peso(b),
+      freeDate: names[t % 12] + ' ' + year,
+      freeIn: 'in about ' + parts.join(' ') + ' · Snowball',
+      nudge: saved > 0 ? 'Add ₱1,000 more a month and you’re free ' + saved + (saved === 1 ? ' month' : ' months') + ' sooner.' : 'You’re already paying a strong amount. Nice.',
+      onSlide: function (e) { self.setState({ budget: Number(e.target.value) }); },
+      minus: function () { self.setState({ budget: clamp(b - 500) }); },
+      plus: function () { self.setState({ budget: clamp(b + 500) }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

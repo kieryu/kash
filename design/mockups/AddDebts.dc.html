@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kash — Add your debts</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E5B47}a:hover{color:#143F31}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F3F5EF; color: #142019; font-family: 'DM Sans', sans-serif; display: flex; flex-direction: column; padding: 56px 24px 36px; gap: 22px">
+  <div style="display: flex; gap: 6px" aria-label="Step 4 of 5">
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #1E5B47"></div>
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #1E5B47"></div>
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #1E5B47"></div>
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #1E5B47"></div>
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: #D5DDD3"></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <h1 style="margin: 0; font-size: 26px; font-weight: 700; line-height: 1.15; letter-spacing: -0.4px">Add your debts</h1>
+    <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #4E5C54">Cards, installments, loans — even money owed to family. The plan works best when everything is in it.</p>
+  </div>
+  <a href="Account.dc.html" style="text-decoration: none; color: #FFFFFF; background: #1C3D73; border-radius: 20px; height: 150px; box-sizing: border-box; padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 13px; color: #C9D6EC">BDO · Credit card</div>
+        <div style="font-size: 18px; font-weight: 700">Everyday Card</div>
+      </div>
+      <div style="font-size: 13px; font-weight: 700; letter-spacing: 1px; color: #C9D6EC">VISA</div>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-end">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 12px; color: #C9D6EC">Balance</div>
+        <div style="font-size: 22px; font-weight: 700">₱18,450</div>
+      </div>
+      <div style="font-size: 13px; color: #C9D6EC">3% / mo · due 28th</div>
+    </div>
+  </a>
+  <a href="DebtForm.dc.html" style="text-decoration: none; color: #1E5B47; border: 2px dashed #8FB09F; border-radius: 20px; height: 150px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: #F8FAF6">
+    <div style="width: 44px; height: 44px; border-radius: 50%; background: #E2EEE7; display: flex; align-items: center; justify-content: center">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E5B47" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+    </div>
+    <div style="font-size: 16px; font-weight: 700">Add a card or loan</div>
+    <div style="font-size: 13px; color: #4E5C54">Credit card · Installment · SSS / Pag-IBIG · Family</div>
+  </a>
+  <div style="display: flex; gap: 12px; align-items: center; background: #FFFFFF; border-radius: 16px; padding: 12px 14px">
+    <dc-import name="Mascot" mood="think" size="64" hint-size="64px,64px"></dc-import>
+    <div style="font-size: 14px; line-height: 1.45; color: #3A4740">No need for exact numbers yet. You can update balances anytime.</div>
+  </div>
+  <div style="flex-grow: 1"></div>
+  <a href="Budget.dc.html" style="height: 56px; border-radius: 16px; background: #1E5B47; color: #FFFFFF; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none">Continue · 1 debt added</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
