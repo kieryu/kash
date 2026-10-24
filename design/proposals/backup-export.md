@@ -1,6 +1,6 @@
 # Proposal — Export encrypted backup (`(app)/backup/export`) *
 
-Status: **proposal, not built.** Approve or change, then it gets built in slice 9 screens.
+Status: **approved and built** (slice 9 screens). Answers to the open questions are at the bottom.
 
 ## Purpose
 Make one encrypted file the user can move to a new phone or keep safe. Always free (§20).
@@ -61,21 +61,21 @@ Later (not this slice): the "You haven't backed up in 30 days" reminder (§9) op
 | Busy (scrypt ~1–2 s) | Button disabled with "Locking your file…", fields read-only, back disabled. Mascot → think. |
 | Share sheet open | OS sheet (Save to Files / Drive / send to self) |
 | Success | Mascot → cheer, message "Backup saved. Keep the file and your password somewhere safe." Button becomes **Done** (secondary: "Share again"). |
-| Cancelled sheet | Back to idle, no message, lastBackupAt unchanged (see open Q2) |
+| Sheet closed | Counts as saved (Android can't tell): lastBackupAt is set, success shows |
 | Error (write/share fails) | accentSoft box: "Couldn't create the file. Nothing was changed. Try again." |
 
 Password is cleared from state when leaving the screen. Never logged.
 
 ## What happens
 1. `exportBackup(db, password)` → string.
-2. Write to cache dir as `kash-backup-YYYY-MM-DD.json` (see open Q4 for name/extension).
+2. Write to cache dir as `kash-backup-YYYY-MM-DD.json`.
 3. Open share sheet.
 4. Only after the sheet resolves without error: `updateSettings({ lastBackupAt: now })`.
 5. Delete the cache file (it's encrypted anyway; just tidy).
 
 ## Components
 Existing: `Button` (primary/secondary), `TextField` (passes `secureTextEntry`), `Mascot`, `IconButton` + `BackIcon`.
-New: none required. Show/hide password = a `Button variant="link"` beside the field, or skip it (open Q5). Warning box = plain View with tokens (same as Privacy tip); if it repeats on 3+ screens, make an `InfoBox` later.
+Built with: `src/ui/Backup.tsx` (`BackScreen` back-arrow layout, `Note` amber box, `PasswordField` with a Show/Hide link).
 
 ## Dependencies needed to build
 | Package | Why | Network / telemetry | New dev build? |
@@ -83,9 +83,11 @@ New: none required. Show/hide password = a `Button variant="link"` beside the fi
 | `expo-file-system` (~58.0.10) | write the temp file | none (has download APIs; we don't call them) | Probably **no** — already in the tree as a dependency of `expo` and autolinked; add as direct dep via `npx expo install` |
 | `expo-sharing` | open the OS share sheet for a **file** (RN `Share` can't share files on Android) | none | **Yes** — new native module |
 
-## Open questions
+## Open questions — answered
 1. New-phone restore from onboarding — see `backup-import.md` Q1.
 2. **When to set "Last backup"**: Android's share sheet can't tell us if the file was really saved or the sheet was just closed. Proposal: set it when the sheet closes without error. OK?
 3. **Also offer "Save to phone"** (folder picker via `expo-file-system`, no share sheet)? Android's share sheet doesn't always show a "save to Files" target. Proposal: share sheet only in MVP; add if testers can't find where to save.
 4. **File name / extension**: `kash-backup-2026-10-24.json` (opens in any picker) vs. a custom `.kash` (looks nicer, but Android pickers may grey it out). Proposal: `.json`.
 5. **Show/hide password toggle**: add (link-style "Show") or skip? Proposal: add — typos in a password you can't reset are costly.
+
+**Answers:** 1 yes (see import). 2 yes — set when the sheet closes without error. 3 share sheet only. 4 `.json`. 5 keep the toggle.
