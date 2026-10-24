@@ -15,7 +15,7 @@ module.exports = {
       preset: 'jest-expo',
       testEnvironment: 'node',
       transformIgnorePatterns,
-      testMatch: ['**/src/(engine|domain|theme|db|data)/**/*.test.ts'],
+      testMatch: ['**/src/(engine|domain|theme|db|data|backup)/**/*.test.ts'],
     },
     {
       // Anything touching React Native or Expo modules.
@@ -23,7 +23,7 @@ module.exports = {
       preset: 'jest-expo',
       transformIgnorePatterns,
       testMatch: ['**/src/**/*.test.{ts,tsx}'],
-      testPathIgnorePatterns: ['/node_modules/', '/src/(engine|domain|theme|db|data)/'],
+      testPathIgnorePatterns: ['/node_modules/', '/src/(engine|domain|theme|db|data|backup)/'],
     },
   ],
 };
