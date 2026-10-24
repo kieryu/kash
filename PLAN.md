@@ -14,10 +14,10 @@ Update the slice status table as work lands.
 | 4 | UI kit + mascot poses | **Done** except on-device look check |
 | 5 | Onboarding | **Done** except on-device check. Quiz* proposed (`design/proposals/quiz.md`), not built |
 | 6 | Dashboard & payments | **Done** except on-device check. Debts tab*, edit/archive/delete* proposed (`design/proposals/debts-tab.md`, `debt-edit.md`), not built |
-| 7 | Check-in, compare, Plan tab | In progress (lane A). Plan tab* proposed (`design/proposals/plan-tab.md`) |
+| 7 | Check-in, compare, Plan tab | **Done** except on-device check: 10 Check-in, 11 Compare, How was this calculated, reminder deep link + permission + channel. Plan tab*, paid-off* proposed (`design/proposals/plan-tab.md`, `paid-off.md`), not built |
 | 8 | Notifications | Logic **done** (`src/notifications`). Not wired: no caller of `rescheduleReminders`, permission request, Android channel; deep link in slice 7; network check in slice 11. New dev build needed |
 | 9 | Encrypted backup | **Done** except on-device check (new dev build needed: expo-sharing). Entry points not wired: Settings rows (slice 10), restore link on 04 Strategy |
-| 10 | Settings, currency, Pro | — |
+| 10 | Settings, currency, Pro | In progress (lane A) |
 | 11 | Hardening & release prep | — |
 
 Each slice ends with `npm run check` passing (typecheck + lint + tests) and a short summary.

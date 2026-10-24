@@ -125,5 +125,14 @@ Also: "Last backup" is set when the share sheet closes without error (Android ca
 - Dashboard "in about N" counts months from now to the debt-free month; the Budget screen adds +1, so they can differ by a month — align in slice 7.
 - Engine `createdSeq` ties (same-millisecond creation) break by `sort_order`, then id — fixes a flaky order.
 
+### D25. Check-in, compare, explain, reminder wiring (2026-10-24, slice 7)
+- A check-in is dated on the latest statement day on or before today (today if no statement day).
+- A lower statement balance offers only "A payment I didn't log", preselected. That payment isn't tied to this month's plan, so the debt still shows as due on the dashboard.
+- "In about N" = months from the current month to the debt-free month, one helper (`timeUntil`) for Budget and Dashboard; paying off this month reads "this month".
+- Compare runs the dashboard's projection with only the strategy changed. Switching keeps you on Compare.
+- Notification permission asked once, at the end of onboarding ("See my plan"). Reminders rescheduled on every app start after onboarding. Android "reminders" channel created before scheduling.
+- Statement reminders deep-link to `/check-in/<id>`; due-date reminders open the app. A tapped notification navigates even while locked; the lock screen still covers it until unlock.
+- No foreground notification handler: reminders don't show while the app is open.
+
 ## Costs
 No paid services so far. See brief §19.
