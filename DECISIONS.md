@@ -90,5 +90,26 @@ The Android package name is permanent once uploaded to Play. Fine for dev builds
 Kit components take formatted strings and callbacks; they never format money, read the DB or run the engine. Hide-balances masking, the payment sheet's chips and impact message, and strategy illustrations come from the screen.
 **Why:** one place owns each number (the screen's selectors), and the kit stays testable without a DB.
 
+### D21. Onboarding details (2026-10-24, slice 5)
+- "My own order" = debts' `sort_order` (order added). No drag-to-reorder yet, though the card copy says "Drag".
+- Installments/loans stored as baked-in interest: balance = payment × payments left (D4). Debt-free date is right for diminishing loans; their total interest shows as 0.
+- Minimum field takes a fixed amount or a percent ("3%"); "% or ₱X, whichever is higher" not offered in the form yet.
+- Budget step fixed at 500 home-currency units: buttons ±1 step, slider 1/5 step, nudge = 2 steps; starts at the floor rounded up to a step; slider max = max(4 × floor, floor + 10 steps).
+- A nickname that looks like a card number **blocks** saving (brief §4 says "warn"; blocking is stricter).
+- Pro strategies are shown but can't be picked until billing exists (slice 10).
+- Rates entered per month only (as in the mockup); typed amounts use "." for decimals.
+- PIN is 4 digits (D19); the Secure screen copy says 4-digit, not the mockup's 6.
+
+### D22. Reminder scheduling (2026-10-24, slice 8 logic)
+- One-shot DATE triggers for the next 3 months, soonest 60 kept (iOS caps pending at 64). Rescheduled on app start and after debt/settings changes; if the app isn't opened for ~3 months, reminders run out.
+- Fire at 9:00 local. Day past month end clamps to the last day; "N days before" crosses month boundaries. `reminderDaysBefore = 0` = on the day only.
+- Auto-deducted debts get no due-date reminders (statement reminders stay).
+- Notification text shows the nickname, never amounts (visible on the lock screen).
+- `cancelAllScheduledNotificationsAsync` before rescheduling: Kash is the only scheduler.
+- expo-notifications makes no network calls without push tokens (unused). It bundles firebase-messaging on Android, inert without google-services.json — verify with a network capture in slice 11.
+
+### D23. Backup screens — proposed, awaiting approval (2026-10-24)
+Proposals in `design/proposals/backup-export.md` and `backup-import.md`. Key points: export/import are single routes; export password asked twice, min 8 chars, show/hide, no-reset warning; file `kash-backup-YYYY-MM-DD.json` written to cache, shared via expo-sharing, then deleted; `lastBackupAt` set only after the share sheet closes without error; file picking via expo-file-system; replace-all confirmed with a native Alert only when the phone has data; after import → replaceAll, rescheduleReminders, reload, Dashboard; no retry limit on backup password. New deps when built: expo-sharing (new dev build).
+
 ## Costs
 No paid services so far. See brief §19.

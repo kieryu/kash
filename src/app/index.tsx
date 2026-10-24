@@ -1,5 +1,5 @@
 import * as LocalAuthentication from 'expo-local-authentication';
-import { router, useFocusEffect } from 'expo-router';
+import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,16 +11,21 @@ import { runDbSelfCheck, type CheckStep } from '@/dev/dbSelfCheck';
 import { getLockState, setBiometrics, type LockState } from '@/security/pin';
 import { theme } from '@/theme';
 
-// Placeholder home with dev tools. Replaced by onboarding / dashboard in later slices.
+// Placeholder home with dev tools until the dashboard (slice 6). First launch goes to onboarding.
 export default function Index() {
   const [steps, setSteps] = useState<CheckStep[] | null>(null);
   const [running, setRunning] = useState(false);
   const [lock, setLock] = useState<LockState | null>(null);
   const [timeoutSec, setTimeoutSec] = useState<number | null>(null);
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
 
   const refresh = useCallback(() => {
     getLockState().then(setLock);
-    getAppDb().then((db) => setTimeoutSec(getSettings(db).lockTimeoutSec));
+    getAppDb().then((db) => {
+      const s = getSettings(db);
+      setTimeoutSec(s.lockTimeoutSec);
+      setOnboarded(s.onboardingDone);
+    });
   }, []);
   useFocusEffect(refresh);
 
@@ -46,6 +51,9 @@ export default function Index() {
       setRunning(false);
     }
   };
+
+  if (onboarded === null) return null;
+  if (!onboarded) return <Redirect href="/welcome" />;
 
   return (
     <SafeAreaView style={styles.screen}>

@@ -15,7 +15,7 @@ import { PinPad } from './PinPad';
 type Props = { lock: LockState; onUnlock: () => void };
 
 // Errors that mean the phone has no biometrics or screen lock to prompt with.
-const NO_DEVICE_LOCK = ['not_enrolled', 'passcode_not_set', 'not_available'];
+export const NO_DEVICE_LOCK = ['not_enrolled', 'passcode_not_set', 'not_available'];
 
 function formatWait(ms: number): string {
   const s = Math.ceil(ms / 1000);
