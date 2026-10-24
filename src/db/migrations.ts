@@ -93,6 +93,13 @@ export const MIGRATIONS: string[][] = [
     )`,
     `INSERT INTO entitlement (id) VALUES (1)`,
   ],
+  [
+    // v2: the home-currency relabel (CLAUDE.md §15) may change a transaction's currency code; nothing else.
+    `DROP TRIGGER transactions_append_only`,
+    `CREATE TRIGGER transactions_append_only
+      BEFORE UPDATE OF id, debt_id, type, amount_minor, occurred_on, plan_month, is_extra, reverses_id, note, created_at ON transactions
+      BEGIN SELECT RAISE(ABORT, 'transactions are append-only'); END`,
+  ],
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

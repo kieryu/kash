@@ -76,7 +76,10 @@ export default function Debts() {
       ) : null}
       {data && !data.canAdd ? (
         <Text style={styles.limit}>
-          The free plan holds {FREE_DEBT_LIMIT} debts. {APP_NAME} Pro will add more — you can keep going with these for now.
+          The free plan holds {FREE_DEBT_LIMIT} debts. {APP_NAME} Pro adds more — you can keep going with these for now.{' '}
+          <Text accessibilityRole="link" style={styles.limitLink} onPress={() => router.push('/pro')}>
+            See {APP_NAME} Pro
+          </Text>
         </Text>
       ) : null}
 
@@ -107,6 +110,7 @@ const styles = StyleSheet.create({
   addTitle: { ...type.button, color: colors.primary },
   addSub: { ...type.small, color: colors.muted },
   limit: { ...type.small, color: colors.accentText, backgroundColor: colors.accentSoft, borderRadius: radius.inputLg, padding: space.md, overflow: 'hidden' },
+  limitLink: { ...type.label, color: colors.accentText, textDecorationLine: 'underline' },
   tip: { flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: colors.surface, borderRadius: radius.card, paddingVertical: space.md, paddingHorizontal: 14 },
   tipText: { ...type.bodySm, color: colors.inkSoft, flex: 1 },
 });

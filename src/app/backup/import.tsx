@@ -8,6 +8,7 @@ import { backupSummary, formatBackupDate, importError, type BackupSummary } from
 import { APP_NAME } from '@/config/app';
 import { getAppDb } from '@/db/client';
 import { listDebts } from '@/db/repositories/debts';
+import { formatMoney } from '@/domain/format';
 import { rescheduleReminders } from '@/notifications/reminders';
 import { theme } from '@/theme';
 import { BackScreen, Note, PasswordField } from '@/ui/Backup';
@@ -150,7 +151,7 @@ export default function ImportBackup() {
           <View style={styles.card}>
             <Row label="Debts" value={String(s.debts)} />
             {s.totals.map((t) => (
-              <Row key={t.currency} label="Total owed" value={money(t.minor, t.currency)} />
+              <Row key={t.currency} label="Total owed" value={formatMoney(t.minor, t.currency)} />
             ))}
           </View>
           <Note>
@@ -183,12 +184,6 @@ function Row({ label, value }: { label: string; value: string }) {
       <Text style={styles.rowValue}>{value}</Text>
     </View>
   );
-}
-
-// ponytail: stand-in until slice 5's formatMoney (src/domain/format.ts) is merged; swap it in then.
-function money(minor: number, currency: string): string {
-  const f = new Intl.NumberFormat(undefined, { style: 'currency', currency });
-  return f.format(minor / 10 ** (f.resolvedOptions().maximumFractionDigits ?? 2));
 }
 
 const { colors, radius, space, type } = theme;

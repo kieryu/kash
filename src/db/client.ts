@@ -70,3 +70,12 @@ export function getAppDb(): ReturnType<typeof openDb> {
   });
   return appDb;
 }
+
+/** Closes the app connection and deletes the database file (with its WAL files). Only for "Delete all data". */
+// Opens it first: the native delete refuses an open file and throws on a missing one.
+export async function deleteAppDb(): Promise<void> {
+  const db = await getAppDb();
+  appDb = null;
+  await db.$client.closeAsync();
+  await SQLite.deleteDatabaseAsync(DB_NAME);
+}

@@ -3,8 +3,8 @@ import { File } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 
-import ExportBackup from '@/app/(app)/backup/export';
-import ImportBackup from '@/app/(app)/backup/import';
+import ExportBackup from '@/app/backup/export';
+import ImportBackup from '@/app/backup/import';
 import { exportBackup, readBackup, replaceAll, WrongPasswordError } from '@/backup/backup';
 import { updateSettings } from '@/db/repositories/settings';
 import { rescheduleReminders } from '@/notifications/reminders';

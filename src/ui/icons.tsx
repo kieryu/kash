@@ -115,3 +115,9 @@ export const SettingsIcon = (p: IconProps) => (
     <Path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" />
   </Stroke>
 );
+
+export const ChevronIcon = (p: IconProps) => (
+  <Stroke {...p}>
+    <Path d="M9 5l7 7-7 7" />
+  </Stroke>
+);
