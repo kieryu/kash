@@ -1,30 +1,27 @@
 import * as LocalAuthentication from 'expo-local-authentication';
-import { Redirect, router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { APP_NAME } from '@/config/app';
 import { getAppDb } from '@/db/client';
 import { getSettings, updateSettings } from '@/db/repositories/settings';
 import { runDbSelfCheck, type CheckStep } from '@/dev/dbSelfCheck';
 import { getLockState, setBiometrics, type LockState } from '@/security/pin';
 import { theme } from '@/theme';
 
-// Placeholder home with dev tools until the dashboard (slice 6). First launch goes to onboarding.
-export default function Index() {
+// Settings placeholder with dev tools until slice 10.
+export default function Settings() {
   const [steps, setSteps] = useState<CheckStep[] | null>(null);
   const [running, setRunning] = useState(false);
   const [lock, setLock] = useState<LockState | null>(null);
   const [timeoutSec, setTimeoutSec] = useState<number | null>(null);
-  const [onboarded, setOnboarded] = useState<boolean | null>(null);
 
   const refresh = useCallback(() => {
     getLockState().then(setLock);
     getAppDb().then((db) => {
       const s = getSettings(db);
       setTimeoutSec(s.lockTimeoutSec);
-      setOnboarded(s.onboardingDone);
     });
   }, []);
   useFocusEffect(refresh);
@@ -52,14 +49,11 @@ export default function Index() {
     }
   };
 
-  if (onboarded === null) return null;
-  if (!onboarded) return <Redirect href="/welcome" />;
-
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.wordmark}>{APP_NAME}</Text>
-        <Text style={styles.body}>Development build · slice 3</Text>
+        <Text style={styles.wordmark}>Settings</Text>
+        <Text style={styles.body}>Settings arrive in a later update.</Text>
 
         {__DEV__ && (
           <View style={styles.card}>
@@ -113,7 +107,7 @@ const { colors, space, radius, size, type } = theme;
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { padding: space.screenApp, gap: space.lg },
-  wordmark: { ...type.wordmark, color: colors.primary },
+  wordmark: { ...type.screenHeader, color: colors.ink },
   body: { ...type.body, color: colors.muted },
   card: { backgroundColor: colors.surface, borderRadius: radius.card, padding: space.lg, gap: space.md },
   sectionTitle: { ...type.sectionTitle, color: colors.ink },

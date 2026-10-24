@@ -31,6 +31,7 @@ export const colors = {
   cardChipLine: '#C9A55A',
   dashedLine: '#8FB09F',
   surfaceSoft: '#F8FAF6',
+  movementChip: '#F4CF8E',
 } as const;
 
 // Sheet backdrop and card shadow: `ink` at these opacities.
