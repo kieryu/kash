@@ -47,6 +47,8 @@ export const type = {
   cardNetwork: style(13, 'bold', { fontStyle: 'italic', letterSpacing: 0.5 }),
   miniName: style(13, 'bold'),
   miniBalance: style(16, 'bold'),
+  settingLabel: style(15, 'medium'),
+  overline: style(13, 'bold', { letterSpacing: 0.6 }),
 } as const satisfies Record<string, TextStyle>;
 
 export type TypeToken = keyof typeof type;

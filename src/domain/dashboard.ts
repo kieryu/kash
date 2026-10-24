@@ -1,12 +1,12 @@
 import { listDebts } from '@/db/repositories/debts';
-import { getSettings } from '@/db/repositories/settings';
+import { getEntitlement, getSettings } from '@/db/repositories/settings';
 import { listTransactions } from '@/db/repositories/transactions';
 import type { Db, DebtRow, Settings, TransactionRow } from '@/db/schema';
 import { simulate, targetOrder, thisMonthPlan } from '@/engine/simulate';
 import type { DebtMonth, Minor, PlanResult, Shortfall, YearMonth } from '@/engine/types';
 
 import { currentYearMonth, formatMoney, formatYearMonth, monthsBetween, timeUntil } from './format';
-import { minimumsFloor, planInput } from './plan';
+import { minimumsFloor, planInput, readOnlyIds } from './plan';
 
 // Dashboard and debt detail numbers, all derived from stored rows (D12).
 
@@ -19,11 +19,19 @@ export type Snapshot = {
   month: YearMonth;
 };
 
-/** Active debts, their transactions and settings, for the current month. */
-export function loadSnapshot(db: Db): Snapshot & { settings: Settings } {
+/** Active debts, their transactions and settings, for the current month. `readOnly` = over the free limit. */
+export function loadSnapshot(db: Db): Snapshot & { settings: Settings; readOnly: Set<string> } {
   const rows = listDebts(db);
-  return { rows, txs: rows.flatMap((r) => listTransactions(db, r.id)), settings: getSettings(db), month: currentYearMonth() };
+  return {
+    rows,
+    txs: rows.flatMap((r) => listTransactions(db, r.id)),
+    settings: getSettings(db),
+    month: currentYearMonth(),
+    readOnly: readOnlyIds(rows, getEntitlement(db).isPro),
+  };
 }
+
+export type LoadedSnapshot = ReturnType<typeof loadSnapshot>;
 
 /** Balance per debt = sum of its transactions. */
 export function balancesOf(txs: TransactionRow[]): Map<string, Minor> {

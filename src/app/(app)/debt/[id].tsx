@@ -3,8 +3,9 @@ import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { APP_NAME } from '@/config/app';
 import { getAppDb } from '@/db/client';
-import type { DebtRow, Settings, TransactionRow } from '@/db/schema';
+import type { DebtRow, TransactionRow } from '@/db/schema';
 import {
   countdown,
   loadSnapshot,
@@ -16,6 +17,7 @@ import {
   progress,
   projection,
   shortDate,
+  type LoadedSnapshot,
   type Snapshot,
 } from '@/domain/dashboard';
 import { KIND_LABELS, templateById } from '@/domain/debtForm';
@@ -25,13 +27,14 @@ import { theme } from '@/theme';
 import { Button, IconButton } from '@/ui/Button';
 import { ProgressBar } from '@/ui/Controls';
 import { DebtCard } from '@/ui/DebtCard';
+import { Note } from '@/ui/Backup';
 import { BackIcon } from '@/ui/icons';
 import { Mascot } from '@/ui/Mascot';
 
 // 09 Debt detail. Edit / archive / delete await approval (design/proposals/debt-edit.md).
 export default function DebtDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [snap, setSnap] = useState<(Snapshot & { settings: Settings }) | null>(null);
+  const [snap, setSnap] = useState<LoadedSnapshot | null>(null);
   const refresh = useCallback(() => {
     getAppDb().then((db) => setSnap(loadSnapshot(db)));
   }, []);
@@ -107,16 +110,23 @@ export default function DebtDetail() {
           <Stat label="Due day" value={ordinal(debt.dueDay)} />
         </View>
 
-        <View style={styles.actions}>
-          {model.balance > 0 ? (
-            <View style={styles.action}>
-              <Button label="Log a payment" onPress={logPayment} />
-            </View>
-          ) : null}
-          <View style={styles.action}>
-            <Button variant="secondary" label="Update balance" onPress={() => router.push({ pathname: '/check-in/[id]', params: { id: debt.id } })} />
+        {snap.readOnly.has(debt.id) ? (
+          <View style={styles.readOnly}>
+            <Note>Read-only on the free plan. It still counts in your plan and totals. {APP_NAME} Pro lets you update it again.</Note>
+            <Button variant="secondary" label={`See ${APP_NAME} Pro`} onPress={() => router.push('/pro')} />
           </View>
-        </View>
+        ) : (
+          <View style={styles.actions}>
+            {model.balance > 0 ? (
+              <View style={styles.action}>
+                <Button label="Log a payment" onPress={logPayment} />
+              </View>
+            ) : null}
+            <View style={styles.action}>
+              <Button variant="secondary" label="Update balance" onPress={() => router.push({ pathname: '/check-in/[id]', params: { id: debt.id } })} />
+            </View>
+          </View>
+        )}
 
         <View style={styles.card}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
@@ -268,4 +278,5 @@ const styles = StyleSheet.create({
   link: { ...type.captionBold, color: colors.primary },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   action: { flex: 1 },
+  readOnly: { gap: 10 },
 });

@@ -12,6 +12,16 @@ export function canAddDebt(count: number, isPro: boolean): boolean {
   return isPro || count < FREE_DEBT_LIMIT;
 }
 
+/**
+ * Debts past the free limit (e.g. after a refund or importing a bigger backup) are read-only:
+ * still shown and in every total and plan, but no new payments or check-ins (§20). Never hidden.
+ * The first ones added keep working.
+ */
+export function readOnlyIds(rows: DebtRow[], isPro: boolean): Set<string> {
+  if (isPro) return new Set();
+  return new Set([...rows].sort((a, b) => a.sortOrder - b.sortOrder).slice(FREE_DEBT_LIMIT).map((r) => r.id));
+}
+
 /** Engine input from stored data. Custom order = the debts' sort order. */
 export function planInput(
   rows: DebtRow[],

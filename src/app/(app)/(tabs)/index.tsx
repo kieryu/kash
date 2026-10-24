@@ -22,10 +22,12 @@ import {
   plannedAmount,
   progress,
   projection,
+  type LoadedSnapshot,
   type Snapshot,
 } from '@/domain/dashboard';
 import { formatYearMonth, today } from '@/domain/format';
 import { paidText, type SheetTarget } from '@/domain/payments';
+import { FREE_DEBT_LIMIT } from '@/domain/plan';
 import { usePaymentSheet } from '@/state/usePaymentSheet';
 import { theme } from '@/theme';
 import { Button } from '@/ui/Button';
@@ -39,7 +41,7 @@ const STRATEGY_NAMES: Record<Settings['strategy'], string> = { snowball: 'Snowba
 
 // 08 Dashboard. Every number is derived from stored rows on focus (D12).
 export default function Dashboard() {
-  const [snap, setSnap] = useState<(Snapshot & { settings: Settings }) | null>(null);
+  const [snap, setSnap] = useState<LoadedSnapshot | null>(null);
   const refresh = useCallback(() => {
     getAppDb().then((db) => setSnap(loadSnapshot(db)));
   }, []);
@@ -72,6 +74,8 @@ export default function Dashboard() {
   });
 
   const focus = model.focus;
+  // Over the free limit: still in the plan, but logging opens Kash Pro (§20).
+  const log = (id: string, open: () => void) => (snap.readOnly.has(id) ? () => router.push('/pro') : open);
   const mood: MascotMood = hide ? 'hide' : model.concern ? 'concern' : model.movementUp ? 'cheer' : 'watch';
 
   return (
@@ -126,7 +130,7 @@ export default function Dashboard() {
                 amountText={money(focus.planned)}
                 splitText={hide ? 'minimum + extra' : `${money(focus.line.paidMinimum)} min + ${money(focus.line.paidExtra)} extra`}
                 paidText={focus.paid > 0 ? paidText(focus.paid, focus.planned, money) : null}
-                onLog={() =>
+                onLog={log(focus.debt.id, () =>
                   payments.open(
                     target(
                       focus.debt,
@@ -135,8 +139,8 @@ export default function Dashboard() {
                       focus.line.minimumDue,
                       hide ? 'Planned: minimum + extra' : `Planned ${money(focus.planned)} · ${money(focus.line.paidMinimum)} minimum + ${money(focus.line.paidExtra)} extra`,
                     ),
-                  )
-                }
+                  ),
+                )}
                 onUndo={() => payments.undo(focus.debt.id)}
               />
             ) : null}
@@ -151,17 +155,28 @@ export default function Dashboard() {
                     name={r.debt.nickname}
                     sub={r.paid > 0 ? `Paid ${money(r.paid)} · logged` : `${dueText(nextDueDate(r.debt.dueDay, day), day)} · ${money(r.planned)}`}
                     status={r.paid > 0 ? 'paid' : r.debt.autoDeducted ? 'auto' : 'due'}
-                    onLog={() => payments.open(target(r.debt, 'planned', r.planned, r.line.minimumDue, `Minimum due ${money(r.line.minimumDue)}`))}
+                    onLog={log(r.debt.id, () => payments.open(target(r.debt, 'planned', r.planned, r.line.minimumDue, `Minimum due ${money(r.line.minimumDue)}`)))}
                     onUndo={() => payments.undo(r.debt.id)}
                   />
                 ))}
               </View>
             ) : null}
 
+            {snap.readOnly.size > 0 ? (
+              <Text style={styles.warn}>
+                The free plan updates {FREE_DEBT_LIMIT} debts.{' '}
+                {snap.readOnly.size === 1 ? '1 more is read-only, but it still counts' : `${snap.readOnly.size} more are read-only, but they still count`} in
+                your plan and totals.{' '}
+                <Text accessibilityRole="link" style={styles.warnLink} onPress={() => router.push('/pro')}>
+                  See {APP_NAME} Pro
+                </Text>
+              </Text>
+            ) : null}
+
             {focus ? (
               <Pressable
                 accessibilityRole="button"
-                onPress={() => payments.open(target(focus.debt, 'extra', 0, 0, `Goes to your focus debt: ${focus.debt.nickname}`))}
+                onPress={log(focus.debt.id, () => payments.open(target(focus.debt, 'extra', 0, 0, `Goes to your focus debt: ${focus.debt.nickname}`)))}
                 style={({ pressed }) => [styles.extra, pressed && styles.pressed]}
               >
                 <View style={styles.extraIcon}>
@@ -362,6 +377,7 @@ const styles = StyleSheet.create({
   carousel: { gap: 10 },
   footnote: { ...type.caption, color: colors.muted, textAlign: 'center' },
   link: { ...type.label, color: colors.primary },
+  warnLink: { ...type.label, color: colors.accentText, textDecorationLine: 'underline' },
   footLink: { ...type.captionBold, color: colors.primary },
   empty: { backgroundColor: colors.surface, borderRadius: radius.card, padding: space.lg, gap: space.md },
 });

@@ -22,9 +22,11 @@ export type LockState = {
   biometrics: boolean;
   failed: number;
   lastFailAt: number | null; // ms epoch
+  /** Erase all data after this many wrong PINs in a row; null = off (default). */
+  wipeAfter?: number | null;
 };
 
-const EMPTY: LockState = { pin: null, biometrics: false, failed: 0, lastFailAt: null };
+const EMPTY: LockState = { pin: null, biometrics: false, failed: 0, lastFailAt: null, wipeAfter: null };
 
 export async function getLockState(): Promise<LockState> {
   const raw = await SecureStore.getItemAsync(LOCK_KEY, STORE_OPTIONS);
@@ -66,6 +68,18 @@ export async function clearFailures(): Promise<void> {
   if (state.failed > 0) await save({ ...state, failed: 0, lastFailAt: null });
 }
 
+/** The one choice offered in Settings for "erase after N wrong PINs". */
+export const WIPE_AFTER = 10;
+
+export async function setWipeAfter(n: number | null): Promise<void> {
+  await save({ ...(await getLockState()), wipeAfter: n });
+}
+
+/** True once the wrong-PIN count reaches the erase setting. */
+export function shouldWipe(s: LockState): boolean {
+  return s.pin !== null && s.wipeAfter != null && s.failed >= s.wipeAfter;
+}
+
 /** Only for "Delete all data". */
 export async function clearLockState(): Promise<void> {
   await SecureStore.deleteItemAsync(LOCK_KEY, STORE_OPTIONS);
@@ -90,7 +104,8 @@ export function waitRemaining(s: LockState, now: number): number {
   return Math.max(0, waitAfter(s.failed) - elapsed);
 }
 
-export type VerifyResult = { ok: true } | { ok: false; waitMs: number; triesLeft: number };
+/** `wipe`: this miss reached the erase setting; the caller erases all data. */
+export type VerifyResult = { ok: true } | { ok: false; waitMs: number; triesLeft: number; wipe?: true };
 
 function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
@@ -113,7 +128,8 @@ export async function verifyPin(pin: string, now = Date.now()): Promise<VerifyRe
     return { ok: true };
   }
 
-  const failed = state.failed + 1;
-  await save({ ...state, failed, lastFailAt: now });
-  return { ok: false, waitMs: waitAfter(failed), triesLeft: Math.max(0, FREE_TRIES - failed) };
+  const next = { ...state, failed: state.failed + 1, lastFailAt: now };
+  await save(next);
+  const r = { ok: false as const, waitMs: waitAfter(next.failed), triesLeft: Math.max(0, FREE_TRIES - next.failed) };
+  return shouldWipe(next) ? { ...r, wipe: true } : r;
 }

@@ -12,7 +12,8 @@ import { FingerprintIcon } from './icons';
 import { Mascot } from './Mascot';
 import { PinPad } from './PinPad';
 
-type Props = { lock: LockState; onUnlock: () => void };
+/** onWipe: the erase-after-N setting was reached; erase everything. */
+type Props = { lock: LockState; onUnlock: () => void; onWipe: () => void };
 
 // Errors that mean the phone has no biometrics or screen lock to prompt with.
 export const NO_DEVICE_LOCK = ['not_enrolled', 'passcode_not_set', 'not_available'];
@@ -34,7 +35,7 @@ function forgotPin() {
   );
 }
 
-export function LockScreen({ lock, onUnlock }: Props) {
+export function LockScreen({ lock, onUnlock, onWipe }: Props) {
   const [mode, setMode] = useState<'bio' | 'pin'>(lock.biometrics ? 'bio' : 'pin');
   const [notice, setNotice] = useState<string | null>(null);
   const [waitUntil, setWaitUntil] = useState(() => Date.now() + waitRemaining(lock, Date.now()));
@@ -71,6 +72,7 @@ export function LockScreen({ lock, onUnlock }: Props) {
   const submitPin = async (pin: string) => {
     const r = await verifyPin(pin);
     if (r.ok) return onUnlock();
+    if (r.wipe) return onWipe();
     setNotice(r.waitMs > 0 ? null : wrongPinMessage(r.triesLeft));
     setNow(Date.now());
     setWaitUntil(Date.now() + r.waitMs);

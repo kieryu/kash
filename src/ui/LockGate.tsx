@@ -1,13 +1,15 @@
+import { router } from 'expo-router';
 import * as ScreenCapture from 'expo-screen-capture';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { AppState, BackHandler, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { APP_NAME } from '@/config/app';
 import { getAppDb } from '@/db/client';
 import { getSettings } from '@/db/repositories/settings';
-import { getLockState, lockEnabled, type LockState } from '@/security/pin';
+import { getLockState, lockEnabled, shouldWipe, type LockState } from '@/security/pin';
+import { deleteAllData } from '@/security/wipe';
 import { theme } from '@/theme';
 
 import { LockScreen } from './LockScreen';
@@ -29,8 +31,13 @@ export function LockGate({ onReady, children }: Props) {
 
   useEffect(() => {
     (async () => {
-      const [db, state] = await Promise.all([getAppDb(), getLockState()]);
-      const s = getSettings(db);
+      let state = await getLockState();
+      // An erase-after-N that was cut short (app killed) finishes before anything opens.
+      if (shouldWipe(state)) {
+        await deleteAllData();
+        state = await getLockState();
+      }
+      const s = getSettings(await getAppDb());
       if (s.blockScreenshots) await ScreenCapture.preventScreenCaptureAsync();
       setLock(state);
       setLocked(lockEnabled(state));
@@ -63,6 +70,18 @@ export function LockGate({ onReady, children }: Props) {
     return () => sub.remove();
   }, []);
 
+  // Erase after N wrong PINs. If it fails, stay locked; the next launch tries again.
+  const wipe = useCallback(async () => {
+    try {
+      await deleteAllData();
+      setLock(await getLockState());
+      setLocked(false);
+      router.replace('/welcome');
+    } catch {
+      // stays locked
+    }
+  }, []);
+
   // Hardware back must not navigate the app hidden under the lock screen.
   useEffect(() => {
     lockShown.current = showLock;
@@ -93,7 +112,7 @@ export function LockGate({ onReady, children }: Props) {
       {showLock && (
         <View style={StyleSheet.absoluteFill}>
           <StatusBar style="light" />
-          <LockScreen lock={lock} onUnlock={() => setLocked(false)} />
+          <LockScreen lock={lock} onUnlock={() => setLocked(false)} onWipe={wipe} />
         </View>
       )}
     </View>

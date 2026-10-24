@@ -2,6 +2,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { APP_NAME } from '@/config/app';
 import { getAppDb } from '@/db/client';
 import { updateSettings } from '@/db/repositories/settings';
 import type { Settings } from '@/db/schema';
@@ -57,12 +58,18 @@ export default function Compare() {
           <Text style={styles.rowTitle}>My own order</Text>
           <Text style={styles.small}>{current === 'custom' ? 'Current · order you added debts' : 'Switch'}</Text>
         </Pressable>
-        {/* Pro strategies: shown, not pickable until billing lands (D21). */}
+        {/* Pro strategies (v1.1): open the paywall. */}
         {['Highest cost first', 'Hybrid'].map((name) => (
-          <View key={name} style={styles.row} accessible accessibilityLabel={`${name}, Kash Pro, coming soon`}>
+          <Pressable
+            key={name}
+            accessibilityRole="button"
+            accessibilityLabel={`${name}, ${APP_NAME} Pro`}
+            onPress={() => router.push('/pro')}
+            style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+          >
             <Text style={styles.rowTitle}>{name}</Text>
             <Text style={styles.pro}>PRO</Text>
-          </View>
+          </Pressable>
         ))}
       </View>
       <Text style={styles.footnote}>Estimates only. Not financial advice.</Text>

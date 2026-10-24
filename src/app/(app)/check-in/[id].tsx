@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { APP_NAME } from '@/config/app';
 import { getAppDb } from '@/db/client';
-import type { Settings } from '@/db/schema';
 import { checkInImpact, impactText, REASON_LABELS, REASON_NOTES, reasonsFor, saveCheckIn, statementDate, type CheckInReason } from '@/domain/checkin';
-import { balancesOf, loadSnapshot, moneyText, shortDate, type Snapshot } from '@/domain/dashboard';
+import { balancesOf, loadSnapshot, moneyText, shortDate, type LoadedSnapshot } from '@/domain/dashboard';
 import { parseMoney, today } from '@/domain/format';
 import { rescheduleReminders } from '@/notifications/reminders';
 import { theme } from '@/theme';
@@ -19,7 +19,7 @@ import { Mascot } from '@/ui/Mascot';
 // 10 Statement check-in. From 09 Debt detail ("Update balance") or a statement-day reminder.
 export default function CheckIn() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [snap, setSnap] = useState<(Snapshot & { settings: Settings }) | null>(null);
+  const [snap, setSnap] = useState<LoadedSnapshot | null>(null);
   const [text, setText] = useState('');
   const [picked, setPicked] = useState<CheckInReason | null>(null);
   useEffect(() => {
@@ -43,6 +43,17 @@ export default function CheckIn() {
       <SafeAreaView style={styles.screen}>
         <Header pill={null} onClose={close} />
         <Text style={[styles.body, styles.padded]}>This debt isn’t here anymore.</Text>
+      </SafeAreaView>
+    );
+  }
+  if (snap.readOnly.has(debt.id)) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <Header pill="Statement check-in" onClose={close} />
+        <View style={[styles.padded, styles.readOnly]}>
+          <Note>{debt.nickname} is read-only on the free plan. It still counts in your plan and totals.</Note>
+          <Button variant="secondary" label={`See ${APP_NAME} Pro`} onPress={() => router.replace('/pro')} />
+        </View>
       </SafeAreaView>
     );
   }
@@ -126,6 +137,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.lg, paddingTop: space.sm },
   pill: { ...type.captionBold, color: colors.proChipText, backgroundColor: colors.proChipBg, borderRadius: radius.pill, paddingVertical: 6, paddingHorizontal: space.md, overflow: 'hidden' },
   padded: { paddingHorizontal: space.screenOnboarding },
+  readOnly: { gap: space.md, paddingTop: space.lg },
   content: { paddingHorizontal: space.screenOnboarding, paddingTop: space.sm, paddingBottom: space.lg, gap: space.xl },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   title: { ...type.screenHeader, color: colors.ink, flex: 1 },

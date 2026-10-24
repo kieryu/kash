@@ -1,4 +1,6 @@
-import { entitlement, settings, type Db, type Entitlement, type Settings } from '../schema';
+import { eq } from 'drizzle-orm';
+
+import { debts, entitlement, settings, transactions, type Db, type Entitlement, type Settings } from '../schema';
 
 // Both tables hold exactly one row (id = 1), seeded by the first migration.
 
@@ -16,4 +18,13 @@ export function getEntitlement(db: Db): Entitlement {
 
 export function setEntitlement(db: Db, e: Omit<Entitlement, 'id'>): void {
   db.update(entitlement).set(e).run();
+}
+
+/** Renames the currency code on the home currency, its debts and transactions. Amounts are untouched. */
+export function relabelCurrency(db: Db, from: string, to: string): void {
+  db.transaction((tx) => {
+    tx.update(debts).set({ currency: to }).where(eq(debts.currency, from)).run();
+    tx.update(transactions).set({ currency: to }).where(eq(transactions.currency, from)).run();
+    tx.update(settings).set({ homeCurrency: to }).run();
+  });
 }

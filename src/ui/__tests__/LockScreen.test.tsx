@@ -28,22 +28,30 @@ beforeEach(() => jest.clearAllMocks());
 it('unlocks with the right PIN', async () => {
   jest.mocked(verifyPin).mockResolvedValue({ ok: true });
   const onUnlock = jest.fn();
-  await render(<LockScreen lock={pinOnly} onUnlock={onUnlock} />);
+  await render(<LockScreen lock={pinOnly} onUnlock={onUnlock} onWipe={jest.fn()} />);
   await enter('4821');
   await waitFor(() => expect(onUnlock).toHaveBeenCalled());
 });
 
 it('says how many tries are left after a wrong PIN', async () => {
   jest.mocked(verifyPin).mockResolvedValue({ ok: false, waitMs: 0, triesLeft: 2 });
-  await render(<LockScreen lock={pinOnly} onUnlock={jest.fn()} />);
+  await render(<LockScreen lock={pinOnly} onUnlock={jest.fn()} onWipe={jest.fn()} />);
   await enter('0000');
   expect(await screen.findByText('Wrong PIN. 2 tries before a short wait.')).toBeTruthy();
 });
 
 it('shows the wait and disables the keys', async () => {
   jest.mocked(verifyPin).mockResolvedValue({ ok: false, waitMs: 30_000, triesLeft: 0 });
-  await render(<LockScreen lock={pinOnly} onUnlock={jest.fn()} />);
+  await render(<LockScreen lock={pinOnly} onUnlock={jest.fn()} onWipe={jest.fn()} />);
   await enter('0000');
   expect(await screen.findByText(/Too many tries\. Try again in 0:(30|29)\./)).toBeTruthy();
   expect(screen.getByLabelText('1')).toBeDisabled();
+});
+
+it('erases when the wrong-PIN limit is reached', async () => {
+  jest.mocked(verifyPin).mockResolvedValue({ ok: false, waitMs: 0, triesLeft: 0, wipe: true });
+  const onWipe = jest.fn();
+  await render(<LockScreen lock={pinOnly} onUnlock={jest.fn()} onWipe={onWipe} />);
+  await enter('0000');
+  await waitFor(() => expect(onWipe).toHaveBeenCalled());
 });

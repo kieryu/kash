@@ -24,7 +24,13 @@ Kash has no account, no server, no cloud sync and no analytics. It works fully o
 - 5 free tries, then waits that grow: 30 s, 1 min, 5 min, 15 min, then 1 hour each. The count lives in secure storage, so deleting or importing data doesn't reset it. Known gap: changing the phone's clock can shorten a wait.
 - While locked, the app underneath is hidden from screen readers and the back button.
 - The lock protects the app's screens. The encryption key itself is protected by the phone's secure storage (see DECISIONS.md D5 for why).
-- Planned: optional "erase data after N wrong PINs" (off by default).
+- Optional: erase all data after 10 wrong PINs in a row — built, off by default. Turning it on shows a warning: it can't be undone, and anyone holding your phone could trigger it on purpose. Tries during a wait don't count. If the app is closed in the middle of erasing, it finishes erasing the next time it opens.
+
+## Delete all data — built
+- Settings → Delete all data asks twice, then removes the encrypted database file, its key, your Kash PIN and lock settings, and all scheduled reminders. The app starts over as new.
+- The database file is deleted first. If that fails, nothing else is touched, so your data still opens. Once the key is gone, any leftover copy of the file can't be read.
+- "Erase after 10 wrong PINs" uses exactly the same steps.
+- A Kash Pro purchase isn't lost: use Restore purchase after setting up again.
 
 ## If you forget your PIN
 If biometrics and the device passcode also fail, your data cannot be recovered without an exported backup file. There is no reset, because there is no server.

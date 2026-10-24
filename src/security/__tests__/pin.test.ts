@@ -7,9 +7,12 @@ import {
   lockEnabled,
   setBiometrics,
   setPin,
+  setWipeAfter,
+  shouldWipe,
   verifyPin,
   waitAfter,
   waitRemaining,
+  WIPE_AFTER,
 } from '../pin';
 
 const mockStore = new Map<string, string>();
@@ -128,5 +131,43 @@ describe('lockEnabled', () => {
     await setBiometrics(true);
     await setPin('1234');
     expect((await getLockState()).biometrics).toBe(true);
+  });
+});
+
+describe('erase after N wrong PINs', () => {
+  it('is off by default: misses never ask for an erase', async () => {
+    await setPin('4821');
+    for (let i = 0; i < 30; i++) {
+      const r = await verifyPin('0000', T0 + i * 2 * 60 * 60_000); // past every wait
+      expect(r).not.toHaveProperty('wipe');
+    }
+  });
+
+  it('asks for an erase on the Nth miss in a row, not before', async () => {
+    await setPin('4821');
+    await setWipeAfter(WIPE_AFTER);
+    const hour = 2 * 60 * 60_000;
+    for (let i = 1; i < WIPE_AFTER; i++) expect(await verifyPin('0000', T0 + i * hour)).not.toHaveProperty('wipe');
+    expect(shouldWipe(await getLockState())).toBe(false);
+    expect(await verifyPin('0000', T0 + WIPE_AFTER * hour)).toMatchObject({ ok: false, wipe: true });
+    expect(shouldWipe(await getLockState())).toBe(true);
+  });
+
+  it('tries during a wait don’t count toward it', async () => {
+    await setPin('4821');
+    await setWipeAfter(FREE_TRIES + 1);
+    await missTimes(FREE_TRIES); // now in a 30 s wait
+    expect(await verifyPin('0000', T0 + 1_000)).not.toHaveProperty('wipe');
+    expect((await getLockState()).failed).toBe(FREE_TRIES);
+  });
+
+  it('a right PIN resets the count; turning it off stops it', async () => {
+    await setPin('4821');
+    await setWipeAfter(2);
+    await verifyPin('0000', T0);
+    expect(await verifyPin('4821', T0 + 1)).toEqual({ ok: true });
+    await setWipeAfter(null);
+    await missTimes(2, T0 + 2);
+    expect(shouldWipe(await getLockState())).toBe(false);
   });
 });

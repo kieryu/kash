@@ -14,7 +14,7 @@ import { PageDots, StrategyCard } from '@/ui/StrategyCard';
 
 type Id = Settings['strategy'] | 'cost' | 'hybrid';
 
-// MVP: Snowball, Avalanche, My own order (D3). Pro ones are shown but can't be picked yet (§12).
+// MVP: Snowball, Avalanche, My own order (D3). Pro ones open the paywall; they arrive in v1.1 (§12).
 const CARDS: { id: Id; name: string; how: string; best: string; pro?: boolean }[] = [
   { id: 'snowball', name: 'Snowball', how: 'Pay the smallest balance first. Each debt you clear rolls its payment into the next.', best: 'Best if quick wins keep you going' },
   { id: 'avalanche', name: 'Avalanche', how: 'Pay the highest interest rate first. You pay the least interest overall.', best: 'Best if saving money matters most' },
@@ -50,7 +50,12 @@ export default function Strategy() {
       footer={
         <>
           {card.pro ? <Text style={styles.note}>{card.name} comes with {APP_NAME} Pro in a later update. Snowball, Avalanche and My own order are free.</Text> : null}
-          <Button label={`Use ${card.name}`} disabled={card.pro} onPress={use} />
+          {card.pro ? (
+            <Button variant="secondary" label={`See ${APP_NAME} Pro`} onPress={() => router.push('/pro')} />
+          ) : (
+            <Button label={`Use ${card.name}`} onPress={use} />
+          )}
+          <Button variant="link" label="Have a backup? Restore it" onPress={() => router.push('/backup/import')} />
         </>
       }
     >
