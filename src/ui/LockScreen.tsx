@@ -7,7 +7,9 @@ import { APP_NAME } from '@/config/app';
 import { clearFailures, verifyPin, waitRemaining, type LockState } from '@/security/pin';
 import { theme } from '@/theme';
 
+import { Button } from './Button';
 import { FingerprintIcon } from './icons';
+import { Mascot } from './Mascot';
 import { PinPad } from './PinPad';
 
 type Props = { lock: LockState; onUnlock: () => void };
@@ -97,8 +99,9 @@ export function LockScreen({ lock, onUnlock }: Props) {
 
   return (
     <SafeAreaView style={styles.screen}>
-      {/* TODO(slice 4): sleeping mascot inside the halo. */}
-      <View style={styles.halo} />
+      <View style={styles.halo}>
+        <Mascot mood="sleep" size={160} />
+      </View>
       <Text style={styles.title} accessibilityRole="header">
         {APP_NAME} is locked
       </Text>
@@ -119,12 +122,15 @@ export function LockScreen({ lock, onUnlock }: Props) {
       </Pressable>
       <Text style={styles.hint}>Touch to unlock</Text>
       {lock.pin && (
-        <Pressable accessibilityRole="button" onPress={() => {
+        <Button
+          variant="link"
+          color={colors.onPrimary}
+          label="Use PIN instead"
+          onPress={() => {
             setNotice(null);
             setMode('pin');
-          }} style={styles.link}>
-          <Text style={styles.linkText}>Use PIN instead</Text>
-        </Pressable>
+          }}
+        />
       )}
     </SafeAreaView>
   );
@@ -142,7 +148,14 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
     gap: space.xl,
   },
-  halo: { width: size.lockHalo, height: size.lockHalo, borderRadius: size.lockHalo / 2, backgroundColor: colors.primaryRaised },
+  halo: {
+    width: size.lockHalo,
+    height: size.lockHalo,
+    borderRadius: size.lockHalo / 2,
+    backgroundColor: colors.primaryRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: { ...type.title, color: colors.onPrimary, textAlign: 'center', marginTop: space.sm },
   body: { ...type.body, color: colors.onPrimaryMuted, textAlign: 'center', maxWidth: 280 },
   spacer: { flex: 1 },
@@ -156,6 +169,4 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.85 },
   hint: { ...type.bodySm, color: colors.onPrimaryMuted },
-  link: { padding: space.md },
-  linkText: { ...type.button, color: colors.onPrimary },
 });

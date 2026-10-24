@@ -86,5 +86,9 @@ The Android package name is permanent once uploaded to Play. Fine for dev builds
 - Recents privacy on Android = the screenshot-blocking switch (FLAG_SECURE), as the Settings mockup says.
 **Why:** smallest set that covers the threat model without letting a backup or a clock reset the lock.
 
+### D20. UI kit is presentational (2026-10-24)
+Kit components take formatted strings and callbacks; they never format money, read the DB or run the engine. Hide-balances masking, the payment sheet's chips and impact message, and strategy illustrations come from the screen.
+**Why:** one place owns each number (the screen's selectors), and the kit stays testable without a DB.
+
 ## Costs
 No paid services so far. See brief §19.

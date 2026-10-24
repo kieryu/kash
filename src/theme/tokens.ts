@@ -4,12 +4,14 @@ export const colors = {
   bg: '#F3F5EF',
   surface: '#FFFFFF',
   ink: '#142019',
+  inkSoft: '#3A4740',
   muted: '#4E5C54',
   line: '#DDE3DA',
   lineStrong: '#C9D6CD',
   divider: '#ECEFE9',
   primary: '#1E5B47',
   primarySoft: '#E2EEE7',
+  onPrimarySoft: '#1D3A30',
   onPrimary: '#FFFFFF',
   onPrimaryMuted: '#CFE3D8',
   primaryTrack: '#2F7660',
@@ -24,7 +26,13 @@ export const colors = {
   danger: '#A3361C',
   segmentBg: '#E3E9E1',
   switchOff: '#B7C2BB',
+  handle: '#D5DDD3',
+  cardChip: '#E9C77B',
+  cardChipLine: '#C9A55A',
 } as const;
+
+// Sheet backdrop and card shadow: `ink` at these opacities.
+export const opacity = { scrim: 0.45, shadow: 0.18 } as const;
 
 export type ColorToken = keyof typeof colors;
 
@@ -35,6 +43,19 @@ export const mascotColors = {
   fur: '#F0C391',
   face: '#FBE6C8',
   collar: '#E85D8A',
+  furLine: '#DDA570',
+  innerEar: '#D6A086',
+  eye: '#1E130B',
+  muzzle: '#FFF3E1',
+  tongue: '#E8708C',
+  mouth: '#5A3A22',
+  brow: '#B9824E',
+  tag: '#C9CED3',
+  coin: '#E9A23B',
+  coinLine: '#A8690F',
+  coinText: '#6E430A',
+  sleepZ: '#8A5A30',
+  shine: '#FFFFFF',
 } as const;
 
 export const space = {
@@ -54,6 +75,7 @@ export const radius = {
   button: 16,
   card: 16,
   cardLg: 22,
+  sheet: 24,
   pill: 999,
 } as const;
 
@@ -74,4 +96,10 @@ export const size = {
   lockButton: 84,
   pinKey: 72,
   pinDot: 14,
+  segment: 30,
+  sheetHandleWidth: 40,
+  sheetHandleHeight: 4,
+  colorBar: 8,
+  strategyCardWidth: 286,
+  strategyArt: 132,
 } as const;

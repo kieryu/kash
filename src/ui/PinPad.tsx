@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { theme } from '@/theme';
 
+import { Button, IconButton } from './Button';
 import { BackIcon, DeleteIcon, FingerprintIcon } from './icons';
 
 const PIN_LENGTH = 4;
@@ -59,9 +60,9 @@ export function PinPad({ tone, title, subtitle, message, disabled, onComplete, o
     <SafeAreaView style={[styles.screen, { backgroundColor: c.bg }]}>
       <View style={styles.top}>
         {onBack && (
-          <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={onBack} style={styles.back} hitSlop={8}>
+          <IconButton accessibilityLabel="Back" onPress={onBack}>
             <BackIcon size={24} color={c.text} />
-          </Pressable>
+          </IconButton>
         )}
       </View>
 
@@ -117,11 +118,7 @@ export function PinPad({ tone, title, subtitle, message, disabled, onComplete, o
       </View>
 
       <View style={styles.footer}>
-        {onForgot && (
-          <Pressable accessibilityRole="button" onPress={onForgot} style={styles.link}>
-            <Text style={[styles.linkText, { color: c.text }]}>Forgot your PIN?</Text>
-          </Pressable>
-        )}
+        {onForgot && <Button variant="link" color={c.text} label="Forgot your PIN?" onPress={onForgot} />}
       </View>
     </SafeAreaView>
   );
@@ -137,7 +134,6 @@ const toneColors = {
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: space.screenOnboarding },
   top: { height: size.hitTarget, justifyContent: 'center' },
-  back: { width: size.hitTarget, height: size.hitTarget, justifyContent: 'center' },
   header: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.md },
   title: { ...type.title, textAlign: 'center' },
   subtitle: { ...type.body, textAlign: 'center', maxWidth: 300 },
@@ -151,6 +147,4 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.7 },
   dim: { opacity: 0.5 },
   footer: { height: size.buttonPrimary, alignItems: 'center', justifyContent: 'center' },
-  link: { padding: space.md },
-  linkText: type.button,
 });
