@@ -134,5 +134,28 @@ Also: "Last backup" is set when the share sheet closes without error (Android ca
 - Statement reminders deep-link to `/check-in/<id>`; due-date reminders open the app. A tapped notification navigates even while locked; the lock screen still covers it until unlock.
 - No foreground notification handler: reminders don't show while the app is open.
 
+### D26. Migration v2: currency code on transactions may change (2026-10-24, approved)
+The append-only trigger (D18) now blocks UPDATE of every `transactions` column except `currency`, so the home-currency relabel (§15) can rewrite codes in place. Amounts, dates, types and links stay locked. Backup import gets a no-op upgrade step for v2.
+**Why:** a relabel is metadata, not a balance change; forward-only, so this is permanent.
+
+### D27. Relabel limits
+Once debts exist, relabel only between currencies with the same minor-unit digits (PHP → USD ok, PHP → JPY refused). With no debts any currency works; a saved budget is cleared if digits differ. "Convert totals" shows "Not available yet" (MVP is single-currency).
+
+### D28. Free-plan read-only debts
+Debts after the first 3 by `sort_order` are read-only: shown, counted in plan and totals; Log / extra / check-in open the paywall. Undo still works on them.
+
+### D29. Erase after wrong PINs
+Fixed at 10 tries, off by default, only offered when a PIN is set. Stored in the SecureStore lock record (`wipeAfter`) so a backup import can't change it. Same code path as Delete all data; resumes on next launch if cut short.
+
+### D30. Delete all data order
+DB file → DB key → reminders → lock record. If the DB file can't be deleted, nothing else is touched (fail closed, D14). Pro entitlement isn't kept; Restore purchase brings it back.
+
+### D31. Paywall and backup routes at root level
+`/pro` and `/backup/*` live outside `(app)` so onboarding can reach them (restore link on 04). URLs unchanged.
+
+### D32. Paywall only on tap
+It opens only from a user tap on something Pro, so no weekly "last shown" counter is stored. Billing is a stub (`src/billing/billing.ts`) until expo-iap at launch.
+**Open:** paywall copy lists Pro features not built yet — fix copy or ship them before billing goes live.
+
 ## Costs
 No paid services so far. See brief §19.
