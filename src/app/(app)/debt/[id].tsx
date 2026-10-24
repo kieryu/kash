@@ -107,7 +107,16 @@ export default function DebtDetail() {
           <Stat label="Due day" value={ordinal(debt.dueDay)} />
         </View>
 
-        {model.balance > 0 ? <Button label="Log a payment" onPress={logPayment} /> : null}
+        <View style={styles.actions}>
+          {model.balance > 0 ? (
+            <View style={styles.action}>
+              <Button label="Log a payment" onPress={logPayment} />
+            </View>
+          ) : null}
+          <View style={styles.action}>
+            <Button variant="secondary" label="Update balance" onPress={() => router.push({ pathname: '/check-in/[id]', params: { id: debt.id } })} />
+          </View>
+        </View>
 
         <View style={styles.card}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
@@ -126,7 +135,12 @@ export default function DebtDetail() {
           ))}
         </View>
 
-        <Text style={styles.footnote}>Dates and amounts are estimates.</Text>
+        <Text style={styles.footnote}>
+          Dates and amounts are estimates.{' '}
+          <Text accessibilityRole="link" style={styles.link} onPress={() => router.push({ pathname: '/explain', params: { id: debt.id } })}>
+            How is this calculated?
+          </Text>
+        </Text>
       </ScrollView>
       {payments.sheet}
     </SafeAreaView>
@@ -251,4 +265,7 @@ const styles = StyleSheet.create({
   down: { color: colors.primary },
   up: { color: colors.accentLabel },
   footnote: { ...type.caption, color: colors.muted, textAlign: 'center' },
+  link: { ...type.captionBold, color: colors.primary },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  action: { flex: 1 },
 });

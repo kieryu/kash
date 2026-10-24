@@ -5,7 +5,7 @@ import type { Db, DebtRow, Settings, TransactionRow } from '@/db/schema';
 import { simulate, targetOrder, thisMonthPlan } from '@/engine/simulate';
 import type { DebtMonth, Minor, PlanResult, Shortfall, YearMonth } from '@/engine/types';
 
-import { currentYearMonth, durationText, formatMoney, formatYearMonth, monthsBetween } from './format';
+import { currentYearMonth, formatMoney, formatYearMonth, monthsBetween, timeUntil } from './format';
 import { minimumsFloor, planInput } from './plan';
 
 // Dashboard and debt detail numbers, all derived from stored rows (D12).
@@ -56,6 +56,11 @@ function monthStartBalances(s: Snapshot): Map<string, Minor> {
 function input(s: Snapshot) {
   const base = planInput(s.rows, monthStartBalances(s), s.settings, 0, s.month);
   return { ...base, budget: s.settings.budgetMinor ?? minimumsFloor(base.debts) };
+}
+
+/** Monthly budget the plan uses: the saved one, else this month's minimums. */
+export function budgetOf(s: Snapshot): Minor {
+  return input(s).budget;
 }
 
 /** focusId = where extra money goes this month; nextFocusId = where it goes once that's cleared. */
@@ -195,7 +200,7 @@ export function countdown(today: string, date: string): { big: string; sub: stri
   if (days <= COUNTDOWN_DAYS) {
     return { big: days <= 0 ? 'This month' : `${days} ${days === 1 ? 'day' : 'days'}`, sub: `around ${shortDate(date)}`, inDays: true };
   }
-  return { big: formatYearMonth(date.slice(0, 7)), sub: durationText(monthsBetween(today.slice(0, 7), date.slice(0, 7))), inDays: false };
+  return { big: formatYearMonth(date.slice(0, 7)), sub: timeUntil(today.slice(0, 7), date.slice(0, 7)), inDays: false };
 }
 
 /** Formatted money, or "₱ • • • •" when balances are hidden. */

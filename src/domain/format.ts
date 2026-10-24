@@ -51,10 +51,10 @@ export function annualFromMonthly(rate: DecimalStr): DecimalStr {
   return new Big(rate).times(12).toString();
 }
 
-/** "March 2028". */
-export function formatYearMonth(ym: YearMonth, locale?: string): string {
+/** "March 2028", or "Mar 2028" with `month: 'short'`. */
+export function formatYearMonth(ym: YearMonth, locale?: string, month: 'long' | 'short' = 'long'): string {
   const [y, m] = ym.split('-').map(Number);
-  return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(Date.UTC(y, m - 1, 1));
+  return new Intl.DateTimeFormat(locale, { month, year: 'numeric', timeZone: 'UTC' }).format(Date.UTC(y, m - 1, 1));
 }
 
 export function currentYearMonth(now = new Date()): YearMonth {
@@ -76,6 +76,11 @@ export function durationText(months: number): string {
   if (y) parts.push(`${y} ${y === 1 ? 'year' : 'years'}`);
   if (m) parts.push(`${m} ${m === 1 ? 'month' : 'months'}`);
   return `in about ${parts.join(' ')}`;
+}
+
+/** "in about 1 year 2 months" from one month to another. Budget and dashboard both use this, so they agree. */
+export function timeUntil(from: YearMonth, to: YearMonth): string {
+  return durationText(monthsBetween(from, to));
 }
 
 /** Local date as 'YYYY-MM-DD'. */

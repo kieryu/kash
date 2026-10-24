@@ -83,6 +83,12 @@ export const PlusIcon = (p: IconProps) => (
   </Stroke>
 );
 
+export const CloseIcon = (p: IconProps) => (
+  <Stroke {...p}>
+    <Path d="M6 6l12 12M18 6L6 18" />
+  </Stroke>
+);
+
 // Tab bar
 export const HomeIcon = (p: IconProps) => (
   <Stroke {...p}>

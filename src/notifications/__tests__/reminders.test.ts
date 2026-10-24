@@ -5,11 +5,13 @@ import { updateSettings } from '@/db/repositories/settings';
 import type { DebtRow } from '@/db/schema';
 import { testDb } from '@/db/__tests__/testDb';
 
-import { planReminders, rescheduleReminders } from '../reminders';
+import { planReminders, reminderHref, rescheduleReminders } from '../reminders';
 
 jest.mock('expo-crypto', () => ({ randomUUID: () => jest.requireActual('node:crypto').randomUUID() }));
 jest.mock('expo-notifications', () => ({
   SchedulableTriggerInputTypes: { DATE: 'date' },
+  AndroidImportance: { DEFAULT: 3 },
+  setNotificationChannelAsync: jest.fn(async () => null),
   cancelAllScheduledNotificationsAsync: jest.fn(async () => {}),
   scheduleNotificationAsync: jest.fn(async () => 'id'),
 }));
@@ -103,7 +105,17 @@ describe('rescheduleReminders', () => {
     expect(schedule).toHaveBeenCalledTimes(6);
     expect(schedule.mock.calls[0][0]).toMatchObject({
       content: { title: 'Payment due soon', body: 'Card is due in 2 days.', data: { kind: 'due_before' } },
-      trigger: { type: 'date', date: at(2027, 1, 18) },
+      trigger: { type: 'date', date: at(2027, 1, 18), channelId: 'reminders' },
     });
+  });
+});
+
+describe('reminderHref', () => {
+  it('opens check-in for statement reminders only', () => {
+    expect(reminderHref({ kind: 'statement', debtId: 'd1' })).toBe('/check-in/d1');
+    expect(reminderHref({ kind: 'due_today', debtId: 'd1' })).toBeNull();
+    expect(reminderHref({ kind: 'statement' })).toBeNull();
+    expect(reminderHref({ kind: 'statement', debtId: 5 })).toBeNull();
+    expect(reminderHref(null)).toBeNull();
   });
 });

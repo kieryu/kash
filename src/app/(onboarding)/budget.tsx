@@ -8,9 +8,10 @@ import { listDebts } from '@/db/repositories/debts';
 import { getSettings, updateSettings } from '@/db/repositories/settings';
 import { balances } from '@/db/repositories/transactions';
 import type { Settings } from '@/db/schema';
-import { currentYearMonth, durationText, formatMoney, formatYearMonth, monthsBetween } from '@/domain/format';
+import { currentYearMonth, formatMoney, formatYearMonth, monthsBetween, timeUntil } from '@/domain/format';
 import { budgetRange, budgetStep, minimumsFloor, planInput } from '@/domain/plan';
 import { simulate } from '@/engine/simulate';
+import { requestReminderPermission } from '@/notifications/reminders';
 import type { PlanInput, PlanResult } from '@/engine/types';
 import { theme } from '@/theme';
 import { Button } from '@/ui/Button';
@@ -48,6 +49,8 @@ export default function Budget() {
 
   const finish = async () => {
     updateSettings(await getAppDb(), { budgetMinor: budget, planStartMonth: data.base.start, onboardingDone: true });
+    // Ask here: the plan is set, so due-date and statement reminders make sense. The app layout schedules them.
+    await requestReminderPermission().catch(() => false);
     router.dismissAll();
     router.replace('/');
   };
@@ -113,7 +116,7 @@ function nudge(plan: PlanResult, faster: PlanResult, extra: string): string {
 function Hero({ plan, start, strategy, money }: { plan: PlanResult; start: string; strategy: string; money: (n: number) => string }) {
   const ok = plan.status === 'ok';
   const lines = ok
-    ? ['You’ll be debt-free by', formatYearMonth(plan.debtFree), `${durationText(monthsBetween(start, plan.debtFree) + 1)} · ${strategy}`]
+    ? ['You’ll be debt-free by', formatYearMonth(plan.debtFree), `${timeUntil(start, plan.debtFree)} · ${strategy}`]
     : plan.status === 'shortfall'
       ? ['Your minimums grow past this amount', `in ${formatYearMonth(plan.month)}`, `Add about ${money(plan.shortBy)} a month to keep up.`]
       : ['At this amount', 'interest outpaces payments', 'Raise the amount to see your debt-free date.'];

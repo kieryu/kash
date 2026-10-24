@@ -1,4 +1,5 @@
 import * as Notifications from 'expo-notifications';
+import { AndroidImportance } from 'expo-notifications';
 
 import { listDebts } from '@/db/repositories/debts';
 import { getSettings } from '@/db/repositories/settings';
@@ -57,14 +58,36 @@ export function planReminders(debts: DebtRow[], daysBefore: number, now: Date): 
     .slice(0, MAX_PENDING);
 }
 
+const CHANNEL_ID = 'reminders';
+
+// Android 8+ shows nothing without a channel, and Android 13 only asks for permission once one exists. No-op on iOS.
+function ensureChannel() {
+  return Notifications.setNotificationChannelAsync(CHANNEL_ID, { name: 'Reminders', importance: AndroidImportance.DEFAULT });
+}
+
+/** Asks for notification permission if the OS still allows asking. Returns whether reminders can show. */
+export async function requestReminderPermission(): Promise<boolean> {
+  await ensureChannel();
+  const current = await Notifications.getPermissionsAsync();
+  if (current.granted || !current.canAskAgain) return current.granted;
+  return (await Notifications.requestPermissionsAsync()).granted;
+}
+
+/** Where tapping a reminder goes: statement day → 10 Check-in for that debt; due reminders just open the app. */
+export function reminderHref(data: unknown): `/check-in/${string}` | null {
+  const d = data as { kind?: unknown; debtId?: unknown } | null | undefined;
+  return d?.kind === 'statement' && typeof d.debtId === 'string' && d.debtId ? `/check-in/${d.debtId}` : null;
+}
+
 /** Cancels every scheduled reminder and schedules fresh ones. Call on app start and after debts/settings change. */
 export async function rescheduleReminders(db: Db, now = new Date()): Promise<void> {
+  await ensureChannel();
   // We're the app's only scheduler, so "cancel all" only removes ours.
   await Notifications.cancelAllScheduledNotificationsAsync();
   for (const r of planReminders(listDebts(db), getSettings(db).reminderDaysBefore, now)) {
     await Notifications.scheduleNotificationAsync({
       content: { title: r.title, body: r.body, data: { debtId: r.debtId, kind: r.kind } },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.at },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.at, channelId: CHANNEL_ID },
     });
   }
 }

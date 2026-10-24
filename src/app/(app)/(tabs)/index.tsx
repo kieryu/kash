@@ -178,9 +178,14 @@ export default function Dashboard() {
 
         {snap.rows.length > 0 ? (
           <View style={styles.section}>
-            <Text accessibilityRole="header" style={styles.sectionTitle}>
-              Your debts
-            </Text>
+            <View style={styles.sectionHead}>
+              <Text accessibilityRole="header" style={styles.sectionTitle}>
+                Your debts
+              </Text>
+              <Text accessibilityRole="link" style={styles.link} onPress={() => router.push('/compare')}>
+                Compare strategies
+              </Text>
+            </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carousel}>
               {snap.rows.map((d) => (
                 <DebtCard
@@ -198,7 +203,12 @@ export default function Dashboard() {
         ) : null}
 
         {model.plan.lines.length > 0 ? (
-          <Text style={styles.footnote}>Interest this month ≈ {money(model.interest)} · estimate</Text>
+          <Text style={styles.footnote}>
+            Interest this month ≈ {money(model.interest)} · estimate ·{' '}
+            <Text accessibilityRole="link" style={styles.footLink} onPress={() => router.push('/explain')}>
+              How is this calculated?
+            </Text>
+          </Text>
         ) : null}
       </ScrollView>
       {payments.sheet}
@@ -351,5 +361,7 @@ const styles = StyleSheet.create({
   caption: { ...type.caption, color: colors.muted },
   carousel: { gap: 10 },
   footnote: { ...type.caption, color: colors.muted, textAlign: 'center' },
+  link: { ...type.label, color: colors.primary },
+  footLink: { ...type.captionBold, color: colors.primary },
   empty: { backgroundColor: colors.surface, borderRadius: radius.card, padding: space.lg, gap: space.md },
 });

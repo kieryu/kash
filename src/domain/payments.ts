@@ -103,7 +103,8 @@ export function undoPayment(db: Db, debtId: string, month: YearMonth, on: string
   });
 }
 
-function syncPaidOff(db: Db, debtId: string, on: string): boolean {
+/** Sets or clears `paid_off_on` from the balance. Returns true when it changed. */
+export function syncPaidOff(db: Db, debtId: string, on: string): boolean {
   const done = balanceOf(db, debtId) <= 0;
   if (done === Boolean(getDebt(db, debtId)?.paidOffOn)) return false;
   updateDebt(db, debtId, { paidOffOn: done ? on : null });
