@@ -22,6 +22,7 @@ export const type = {
   hero: style(26, 'bold'),
   sectionTitle: style(17, 'bold'),
   body: style(15, 'regular', { lineHeight: 22.5 }),
+  quote: style(19, 'medium', { lineHeight: 26.5 }),
   rowTitle: style(15, 'bold'),
   rowTitleSm: style(14, 'bold'),
   bodySm: style(14, 'regular'),

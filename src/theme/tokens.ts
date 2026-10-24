@@ -29,6 +29,8 @@ export const colors = {
   handle: '#D5DDD3',
   cardChip: '#E9C77B',
   cardChipLine: '#C9A55A',
+  dashedLine: '#8FB09F',
+  surfaceSoft: '#F8FAF6',
 } as const;
 
 // Sheet backdrop and card shadow: `ink` at these opacities.

@@ -6,8 +6,8 @@ import { theme } from '@/theme';
 type ButtonProps = {
   label: string;
   onPress: () => void;
-  /** primary 56 tall · secondary 52 outlined · compact 44 (inside cards) · link (text only). */
-  variant?: 'primary' | 'secondary' | 'compact' | 'link';
+  /** primary 56 tall · accent 56 amber (splash, Pro) · secondary 52 outlined · compact 44 (inside cards) · link (text only). */
+  variant?: 'primary' | 'accent' | 'secondary' | 'compact' | 'link';
   /** Text color for `link`, e.g. white on the green lock screen. */
   color?: string;
   disabled?: boolean;
@@ -68,6 +68,7 @@ const center = { alignItems: 'center', justifyContent: 'center' } as const;
 
 const textColor = {
   primary: { color: colors.onPrimary },
+  accent: { color: colors.onAccent },
   compact: { color: colors.onPrimary },
   secondary: { color: colors.primary },
   link: { color: colors.primary },
@@ -75,6 +76,7 @@ const textColor = {
 
 const styles = StyleSheet.create({
   primary: { ...center, height: size.buttonPrimary, borderRadius: radius.button, backgroundColor: colors.primary },
+  accent: { ...center, height: size.buttonPrimary, borderRadius: radius.button, backgroundColor: colors.accent },
   secondary: {
     ...center,
     height: size.buttonSecondary,
