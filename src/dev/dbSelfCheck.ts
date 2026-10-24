@@ -1,9 +1,11 @@
+import { scryptAsync } from '@noble/hashes/scrypt.js';
 import * as SQLite from 'expo-sqlite';
 
 import { openDb, openEncryptedDb } from '@/db/client';
 import { createDebt } from '@/db/repositories/debts';
 import { balanceOf } from '@/db/repositories/transactions';
 import { getOrCreateDbKey } from '@/security/keyManager';
+import { SCRYPT } from '@/security/pin';
 
 // Development-only check that SQLCipher works on a real device. Uses a throwaway database file.
 
@@ -94,5 +96,15 @@ export async function runDbSelfCheck(): Promise<CheckStep[]> {
   });
 
   await SQLite.deleteDatabaseAsync(CHECK_DB).catch(() => undefined);
+
+  // DECISIONS.md D13: over ~500 ms on a mid-range phone → switch to react-native-quick-crypto.
+  await step(steps, 'PIN hash speed (scrypt, target ≤ 500 ms)', async () => {
+    const t = Date.now();
+    await scryptAsync('0000', 'salt-for-timing', { ...SCRYPT, dkLen: 32 });
+    const ms = Date.now() - t;
+    if (ms > 500) throw new Error(`${ms} ms — too slow`);
+    return `${ms} ms`;
+  });
+
   return steps;
 }

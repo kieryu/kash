@@ -10,8 +10,8 @@ Update the slice status table as work lands.
 | 0 | Scaffold & guardrails | **Done** except on-device check (EAS dev build → "Run check" on home screen) |
 | 1 | Payoff engine | **Done** |
 | 2 | Data layer | **Done** except on-device check ("Run check" now also runs migrations + repos) |
-| 3 | Security & lock | Next |
-| 4 | UI kit + mascot poses | — |
+| 3 | Security & lock | **Done** except on-device check (new dev build needed: native modules added) |
+| 4 | UI kit + mascot poses | Next |
 | 5 | Onboarding | — |
 | 6 | Dashboard & payments | — |
 | 7 | Check-in, compare, Plan tab | — |
@@ -32,7 +32,8 @@ Install `big.js` (+ `@types/big.js`) and dev `fast-check`. Build money/rates/min
 ### 2. Data layer — done
 Drizzle ORM (expo-sqlite driver) + versioned forward-only migrations on start; repositories in `src/db/repositories/`; balance derivation from transactions; `debt → EngineDebt` mapping (`src/domain`); card-number detector; card template catalog JSON (`src/data`).
 
-### 3. Security & lock
+### 3. Security & lock — done
+Built: `src/security/pin.ts` (scrypt PIN, escalating waits), `src/ui/LockGate.tsx` (lock on launch + after timeout, overlay), `LockScreen`, `PinPad`, `app/pin-setup.tsx`, screenshot blocking from settings. Moved to slice 10: wipe after N tries (lands with "Delete all data").
 PIN (4 digits, scrypt via @noble/hashes, benchmark ≤ ~500 ms else react-native-quick-crypto), escalating delays, optional wipe after N attempts; expo-local-authentication; lock gate + auto-lock timeout; 14 Lock screen; screen privacy (expo-screen-capture). PIN setup/entry screens*.
 
 ### 4. UI kit

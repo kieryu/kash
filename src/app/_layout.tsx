@@ -5,26 +5,23 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useCallback } from 'react';
 
 import { theme } from '@/theme';
+import { LockGate } from '@/ui/LockGate';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ DMSans_400Regular, DMSans_500Medium, DMSans_700Bold });
-  const ready = fontsLoaded || fontError !== null;
+  const hideSplash = useCallback(() => SplashScreen.hideAsync(), []);
 
-  useEffect(() => {
-    if (ready) SplashScreen.hideAsync();
-  }, [ready]);
-
-  if (!ready) return null;
+  if (!fontsLoaded && fontError === null) return null;
 
   return (
-    <>
+    <LockGate onReady={hideSplash}>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.bg } }} />
-    </>
+    </LockGate>
   );
 }

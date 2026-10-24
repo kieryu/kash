@@ -59,3 +59,14 @@ export async function openDb(opts: OpenOptions = {}) {
   migrate(db);
   return db;
 }
+
+let appDb: ReturnType<typeof openDb> | null = null;
+
+/** The app's one shared connection, opened on first use. */
+export function getAppDb(): ReturnType<typeof openDb> {
+  appDb ??= openDb().catch((e) => {
+    appDb = null; // let a later call retry
+    throw e;
+  });
+  return appDb;
+}

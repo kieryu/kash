@@ -77,5 +77,14 @@ The Android package name is permanent once uploaded to Play. Fine for dev builds
 - Repositories are synchronous (expo-sqlite sync API, same as Drizzle's driver). Fine at this data size.
 **Why:** fewest moving parts that still make wrong money data impossible to write.
 
+### D19. App lock details (2026-10-24)
+- **Lock settings live in SecureStore, not the DB**: one record with PIN hash (scrypt N=2^14, r=8, p=1, params stored with the hash), biometrics on/off, miss count. Importing a backup from another phone can't change this phone's lock or reset the count. Auto-lock timeout stays in the DB settings.
+- **Waits**: 5 free tries, then 30 s / 1 min / 5 min / 15 min / 1 h (cap). Tries during a wait aren't checked or counted. A biometric/passcode unlock clears the count. Wall clock (no monotonic clock in Expo).
+- **Lock screen is an overlay over the app**, not a route: navigation state survives a lock, and it can't be popped by back. Underneath is hidden from screen readers.
+- **Fail closed**: if the phone's screen lock is removed and there's no Kash PIN, the lock screen says to turn a screen lock back on — it doesn't let you in.
+- **Wipe after N tries moved to slice 10**, with "Delete all data" (same code, and its on/off switch lives in Settings).
+- Recents privacy on Android = the screenshot-blocking switch (FLAG_SECURE), as the Settings mockup says.
+**Why:** smallest set that covers the threat model without letting a backup or a clock reset the lock.
+
 ## Costs
 No paid services so far. See brief §19.

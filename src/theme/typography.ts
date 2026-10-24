@@ -17,12 +17,14 @@ const style = (fontSize: number, family: keyof typeof fontFamily, extra: TextSty
 export const type = {
   wordmark: style(44, 'bold', { letterSpacing: -1 }),
   h1: style(26, 'bold', { lineHeight: 30, letterSpacing: -0.4 }),
+  title: style(24, 'bold'),
   screenHeader: style(20, 'bold'),
   hero: style(26, 'bold'),
   sectionTitle: style(17, 'bold'),
   body: style(15, 'regular', { lineHeight: 22.5 }),
   rowTitle: style(15, 'bold'),
   rowTitleSm: style(14, 'bold'),
+  bodySm: style(14, 'regular'),
   small: style(13, 'regular'),
   label: style(13, 'bold'),
   caption: style(12, 'regular'),
@@ -30,6 +32,7 @@ export const type = {
   amountSm: style(20, 'bold'),
   amount: style(26, 'bold'),
   amountLg: style(32, 'bold'),
+  pinKey: style(28, 'medium'),
 } as const satisfies Record<string, TextStyle>;
 
 export type TypeToken = keyof typeof type;

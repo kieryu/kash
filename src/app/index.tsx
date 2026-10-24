@@ -1,15 +1,42 @@
-import { useState } from 'react';
+import * as LocalAuthentication from 'expo-local-authentication';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { APP_NAME } from '@/config/app';
+import { getAppDb } from '@/db/client';
+import { getSettings, updateSettings } from '@/db/repositories/settings';
 import { runDbSelfCheck, type CheckStep } from '@/dev/dbSelfCheck';
+import { getLockState, setBiometrics, type LockState } from '@/security/pin';
 import { theme } from '@/theme';
 
-// Placeholder home for slice 0. Replaced by onboarding / dashboard in later slices.
+// Placeholder home with dev tools. Replaced by onboarding / dashboard in later slices.
 export default function Index() {
   const [steps, setSteps] = useState<CheckStep[] | null>(null);
   const [running, setRunning] = useState(false);
+  const [lock, setLock] = useState<LockState | null>(null);
+  const [timeoutSec, setTimeoutSec] = useState<number | null>(null);
+
+  const refresh = useCallback(() => {
+    getLockState().then(setLock);
+    getAppDb().then((db) => setTimeoutSec(getSettings(db).lockTimeoutSec));
+  }, []);
+  useFocusEffect(refresh);
+
+  const toggleBiometrics = async () => {
+    if (!lock?.biometrics) {
+      const r = await LocalAuthentication.authenticateAsync({ promptMessage: 'Turn on biometric lock' });
+      if (!r.success) return;
+    }
+    await setBiometrics(!lock?.biometrics);
+    refresh();
+  };
+
+  const toggleTimeout = async () => {
+    updateSettings(await getAppDb(), { lockTimeoutSec: timeoutSec === 0 ? 60 : 0 });
+    refresh();
+  };
 
   const run = async () => {
     setRunning(true);
@@ -24,7 +51,20 @@ export default function Index() {
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.wordmark}>{APP_NAME}</Text>
-        <Text style={styles.body}>Development build · slice 0</Text>
+        <Text style={styles.body}>Development build · slice 3</Text>
+
+        {__DEV__ && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>App lock</Text>
+            <Text style={styles.caption}>
+              PIN: {lock?.pin ? 'set' : 'not set'} · Biometrics: {lock?.biometrics ? 'on' : 'off'} · Auto-lock:{' '}
+              {timeoutSec === 0 ? 'immediately' : `${timeoutSec ?? '…'} s`}
+            </Text>
+            <DevButton label={lock?.pin ? 'Change PIN' : 'Set PIN'} onPress={() => router.push('/pin-setup')} />
+            <DevButton label={lock?.biometrics ? 'Turn off biometrics' : 'Turn on biometrics'} onPress={toggleBiometrics} />
+            <DevButton label={timeoutSec === 0 ? 'Auto-lock after 1 min' : 'Auto-lock immediately'} onPress={toggleTimeout} />
+          </View>
+        )}
 
         {__DEV__ && (
           <View style={styles.card}>
@@ -49,6 +89,14 @@ export default function Index() {
         )}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function DevButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
+      <Text style={styles.buttonText}>{label}</Text>
+    </Pressable>
   );
 }
 

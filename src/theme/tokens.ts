@@ -13,6 +13,7 @@ export const colors = {
   onPrimary: '#FFFFFF',
   onPrimaryMuted: '#CFE3D8',
   primaryTrack: '#2F7660',
+  primaryRaised: '#276B55',
   accent: '#E9A23B',
   onAccent: '#2E1C04',
   accentSoft: '#FCF3E3',
@@ -69,4 +70,8 @@ export const size = {
   debtCardList: 150,
   debtCardMiniWidth: 148,
   debtCardMiniHeight: 92,
+  lockHalo: 200,
+  lockButton: 84,
+  pinKey: 72,
+  pinDot: 14,
 } as const;

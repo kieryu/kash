@@ -36,6 +36,7 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-secure-store',
+    ['expo-local-authentication', { faceIDPermission: `Allow ${APP_NAME} to use Face ID to unlock the app.` }],
     ['expo-sqlite', { useSQLCipher: true }],
     [
       'expo-splash-screen',
