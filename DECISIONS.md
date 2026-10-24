@@ -157,5 +157,12 @@ DB file → DB key → reminders → lock record. If the DB file can't be delete
 It opens only from a user tap on something Pro, so no weekly "last shown" counter is stored. Billing is a stub (`src/billing/billing.ts`) until expo-iap at launch.
 **Open:** paywall copy lists Pro features not built yet — fix copy or ship them before billing goes live.
 
+### D33. Hardening (2026-10-25, slice 11)
+- `npm run check` includes a network guard test (`src/config/__tests__/networkGuard.test.ts`): fails on analytics/crash/OTA/backend SDKs, an `updates` block, a Firebase config file, or `allowBackup` ≠ false. Re-run `docs/network-audit.md` when adding a dependency.
+- Large fonts: everything grows with the system font except PinPad digits (capped at 1.5×, fixed 72px keys) and debt-type segment labels (shrink to fit).
+- Reduce motion: the payment sheet doesn't animate; native screen transitions follow the OS setting.
+- Privacy policy hosted as a static page (GitHub Pages) from `docs/privacy-policy.md`.
+- **Open (not adopted):** strip Android `INTERNET` permission from preview/production so the OS enforces zero network. Needs a device check that Play Billing still works (it talks to the Play Store app).
+
 ## Costs
 No paid services so far. See brief §19.

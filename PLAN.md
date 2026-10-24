@@ -18,7 +18,7 @@ Update the slice status table as work lands.
 | 8 | Notifications | Logic **done** (`src/notifications`). Not wired: no caller of `rescheduleReminders`, permission request, Android channel; deep link in slice 7; network check in slice 11. New dev build needed |
 | 9 | Encrypted backup | **Done** except on-device check (new dev build needed: expo-sharing). Entry points not wired: Settings rows (slice 10), restore link on 04 Strategy |
 | 10 | Settings, currency, Pro | **Done** except on-device check; billing stubbed; paywall copy lists unbuilt features (D32) |
-| 11 | Hardening & release prep | In progress (lane A) |
+| 11 | Hardening & release prep | **Done** in code/docs (a11y + font scaling, network audit + guard test, Data safety, privacy policy draft, `docs/release.md`). Preview build not run: needs `eas login`/`init`, final package name (D16), Play account |
 
 Each slice ends with `npm run check` passing (typecheck + lint + tests) and a short summary.
 Screens marked * are **not designed** — propose a layout in the DESIGN.md style and get approval before building.
