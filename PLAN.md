@@ -11,17 +11,33 @@ Update the slice status table as work lands.
 | 1 | Payoff engine | **Done** |
 | 2 | Data layer | **Done** except on-device check ("Run check" now also runs migrations + repos) |
 | 3 | Security & lock | **Done** except on-device check (new dev build needed: native modules added) |
-| 4 | UI kit + mascot poses | Next |
-| 5 | Onboarding | — |
+| 4 | UI kit + mascot poses | **Done** except on-device look check |
+| 5 | Onboarding | In progress (lane A, Wave 2) |
 | 6 | Dashboard & payments | — |
 | 7 | Check-in, compare, Plan tab | — |
 | 8 | Notifications | — |
-| 9 | Encrypted backup | — |
+| 9 | Encrypted backup | Logic **done** (merged, `src/backup`); screens in Wave 3 |
 | 10 | Settings, currency, Pro | — |
 | 11 | Hardening & release prep | — |
 
 Each slice ends with `npm run check` passing (typecheck + lint + tests) and a short summary.
 Screens marked * are **not designed** — propose a layout in the DESIGN.md style and get approval before building.
+
+## Parallel work (2 agents)
+
+Two agents run at once, each in its own git worktree and branch. Only run slices in parallel when they don't touch the same files.
+
+| Wave | Agent A (main folder `kash`) | Agent B (worktree `kash-b`) |
+|---|---|---|
+| 1 | Slice 4: UI kit + mascot poses. Move `LockScreen` and `PinPad` onto kit components. | Slice 9 logic: backup format + AES-256-GCM/scrypt crypto in `src/backup`, import/replace-all against the repos. No screens. |
+| 2 | Slice 5: Onboarding | Slice 8 logic: notification scheduling in `src/notifications` (deep link wired in Slice 7) |
+| 3 | Slice 6: Dashboard & payments | Slice 9 screens (export/import flow*) using the UI kit |
+| 4+ | Slices 7, 10, 11 in order, one agent | — |
+
+Rules for parallel agents:
+- Stay inside your slice's folders. If you need to change a shared file (`src/app/_layout.tsx`, `src/theme/`, `src/i18n/en.ts`, `package.json`), keep the change small and mention it in your summary.
+- Only Agent A updates the slice status table in PLAN.md and adds entries to DECISIONS.md. Agent B lists proposed decisions in its summary instead.
+- Each agent commits on its own branch with `npm run check` passing. Merge B into main, then re-run `npm run check` before the next wave.
 
 ### 0. Scaffold & guardrails — done
 Expo SDK 58, TS strict, Expo Router (`src/app/`), EAS profiles, dev client, DM Sans, theme tokens, lint rules (no hex/raw font values outside `src/theme`; `src/engine` may only import relative files + big.js), Jest (projects `logic` = node env for engine/domain/theme, `app` = RN), `APP_NAME` in `src/config/app.json`, DB key manager, `openEncryptedDb` (fails closed), dev-only SQLCipher self-check, DECISIONS.md, SECURITY.md.
@@ -36,8 +52,9 @@ Drizzle ORM (expo-sqlite driver) + versioned forward-only migrations on start; r
 Built: `src/security/pin.ts` (scrypt PIN, escalating waits), `src/ui/LockGate.tsx` (lock on launch + after timeout, overlay), `LockScreen`, `PinPad`, `app/pin-setup.tsx`, screenshot blocking from settings. Moved to slice 10: wipe after N tries (lands with "Delete all data").
 PIN (4 digits, scrypt via @noble/hashes, benchmark ≤ ~500 ms else react-native-quick-crypto), escalating delays, optional wipe after N attempts; expo-local-authentication; lock gate + auto-lock timeout; 14 Lock screen; screen privacy (expo-screen-capture). PIN setup/entry screens*.
 
-### 4. UI kit
-All DESIGN.md §2 components + static mascot poses (react-native-svg, ported from `design/mockups/Mascot.dc.html`).
+### 4. UI kit — done
+Built in `src/ui/`: `Button` (primary / secondary / compact / link), `IconButton`, `Chip`, `Controls` (Switch, SegmentedControl, ProgressBar, TextField), `DebtCard` (full / list / mini), `Payments` (FocusDebtCard, PaymentRow, LogPaymentSheet), `StrategyCard` + `PageDots`, `Mascot` (6 moods). All presentational (D20). LockScreen shows the sleeping mascot; LockScreen/PinPad use Button + IconButton.
+All DESIGN.md §2 components + static mascot poses (react-native-svg, ported from `design/mockups/Mascot.dc.html`). Also move Slice 3's `LockScreen` and `PinPad` onto the kit components.
 
 ### 5. Onboarding
 Screens 01–07; "Help me choose" quiz*; Budget screen runs the live engine.
@@ -55,7 +72,7 @@ expo-notifications local only: due-date (default 3 days before + on the day) and
 Export (AES-256-GCM, scrypt from user password, @noble/ciphers) via share sheet; import → password → preview → replace all; schema version + migrations. Flow screens*.
 
 ### 10. Settings, currency, Pro
-12 Settings, home currency + relabel, delete all data, 13 Paywall, `isPro` gating (free = 3 debts; over-limit debts become read-only, never hidden), billing stubbed (expo-iap at launch).
+12 Settings, home currency + relabel, delete all data (+ optional wipe after N PIN tries, moved from slice 3), 13 Paywall, `isPro` gating (free = 3 debts; over-limit debts become read-only, never hidden), billing stubbed (expo-iap at launch).
 
 ### 11. Hardening
 Accessibility + font scaling pass, network audit (zero requests), Play Data safety notes, preview build for testers.

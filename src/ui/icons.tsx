@@ -1,4 +1,4 @@
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 type IconProps = { size: number; color: string };
 
@@ -30,6 +30,33 @@ export function DeleteIcon({ size, color }: IconProps) {
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M9 5h11v14H9l-6-7z" />
       <Path d="M12.5 9.5l5 5M17.5 9.5l-5 5" />
+    </Svg>
+  );
+}
+
+export function CheckIcon({ size, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M5 12.5l4.5 4L19 7" />
+    </Svg>
+  );
+}
+
+export function TargetIcon({ size, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.4}>
+      <Circle cx={12} cy={12} r={9} />
+      <Circle cx={12} cy={12} r={4} />
+    </Svg>
+  );
+}
+
+/** Filled circle with a check: selected strategy card. */
+export function CheckBadge({ size, color, checkColor }: IconProps & { checkColor: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Circle cx={12} cy={12} r={11} fill={color} />
+      <Path d="M7 12.5l3.2 3L17 9" fill="none" stroke={checkColor} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
