@@ -12,11 +12,11 @@ Update the slice status table as work lands.
 | 2 | Data layer | **Done** except on-device check ("Run check" now also runs migrations + repos) |
 | 3 | Security & lock | **Done** except on-device check (new dev build needed: native modules added) |
 | 4 | UI kit + mascot poses | **Done** except on-device look check |
-| 5 | Onboarding | In progress (lane A, Wave 2) |
-| 6 | Dashboard & payments | — |
+| 5 | Onboarding | **Done** except on-device check. Quiz* proposed (`design/proposals/quiz.md`), not built |
+| 6 | Dashboard & payments | In progress (lane A, Wave 3) |
 | 7 | Check-in, compare, Plan tab | — |
-| 8 | Notifications | — |
-| 9 | Encrypted backup | Logic **done** (merged, `src/backup`); screens in Wave 3 |
+| 8 | Notifications | Logic **done** (`src/notifications`); deep link in slice 7; network check in slice 11 |
+| 9 | Encrypted backup | Logic **done** (`src/backup`). Screens* proposed (`design/proposals/backup-*.md`), awaiting approval |
 | 10 | Settings, currency, Pro | — |
 | 11 | Hardening & release prep | — |
 
