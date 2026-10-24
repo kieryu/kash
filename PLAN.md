@@ -13,8 +13,8 @@ Update the slice status table as work lands.
 | 3 | Security & lock | **Done** except on-device check (new dev build needed: native modules added) |
 | 4 | UI kit + mascot poses | **Done** except on-device look check |
 | 5 | Onboarding | **Done** except on-device check. Quiz* proposed (`design/proposals/quiz.md`), not built |
-| 6 | Dashboard & payments | In progress (lane A, Wave 3) |
-| 7 | Check-in, compare, Plan tab | — |
+| 6 | Dashboard & payments | **Done** except on-device check. Debts tab*, edit/archive/delete* proposed (`design/proposals/debts-tab.md`, `debt-edit.md`), not built |
+| 7 | Check-in, compare, Plan tab | In progress (lane A). Plan tab* proposed (`design/proposals/plan-tab.md`) |
 | 8 | Notifications | Logic **done** (`src/notifications`). Not wired: no caller of `rescheduleReminders`, permission request, Android channel; deep link in slice 7; network check in slice 11. New dev build needed |
 | 9 | Encrypted backup | **Done** except on-device check (new dev build needed: expo-sharing). Entry points not wired: Settings rows (slice 10), restore link on 04 Strategy |
 | 10 | Settings, currency, Pro | — |

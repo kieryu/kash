@@ -108,8 +108,22 @@ Kit components take formatted strings and callbacks; they never format money, re
 - `cancelAllScheduledNotificationsAsync` before rescheduling: Kash is the only scheduler.
 - expo-notifications makes no network calls without push tokens (unused). It bundles firebase-messaging on Android, inert without google-services.json — verify with a network capture in slice 11.
 
-### D23. Backup screens — proposed, awaiting approval (2026-10-24)
-Proposals in `design/proposals/backup-export.md` and `backup-import.md`. Key points: export/import are single routes; export password asked twice, min 8 chars, show/hide, no-reset warning; file `kash-backup-YYYY-MM-DD.json` written to cache, shared via expo-sharing, then deleted; `lastBackupAt` set only after the share sheet closes without error; file picking via expo-file-system; replace-all confirmed with a native Alert only when the phone has data; after import → replaceAll, rescheduleReminders, reload, Dashboard; no retry limit on backup password. New deps when built: expo-sharing (new dev build).
+### D23. Backup screens (2026-10-24, slice 9 screens — built by Agent B)
+Built from the proposals in `design/proposals/backup-export.md` and `backup-import.md`. Key points: export/import are single routes; export password asked twice, min 8 chars, show/hide, no-reset warning; file `kash-backup-YYYY-MM-DD.json` written to cache, shared via expo-sharing, then deleted; `lastBackupAt` set only after the share sheet closes without error; file picking via expo-file-system; replace-all confirmed with a native Alert only when the phone has data; after import → replaceAll, rescheduleReminders, reload, Dashboard; no retry limit on backup password. New deps when built: expo-sharing (new dev build).
+
+Also: "Last backup" is set when the share sheet closes without error (Android can't tell a save from a dismiss); file is .json via share sheet only; import preview is a summary, no old-backup warning in MVP; a reminder-rescheduling failure after import doesn't fail the import; expo-sharing's config plugin not added (only needed to receive shares).
+
+### D24. Dashboard & payments (2026-10-24, slice 6)
+- This month's plan uses balances from before anything was logged this month, so it doesn't shift as you pay.
+- Projection assumes the rest of this month's plan gets paid; anything above a debt's planned amount is a one-off extra this month, sent to the focus debt.
+- Movement = projection with vs. without the latest change that hasn't been undone, shown in months (engine is monthly), not the mockup's "~days". Exactly-as-planned shows "right on plan".
+- Undo reverses all of this month's regular payments on that debt (reversal rows). Extra payments have no undo yet.
+- `paid_off_on` set when a balance hits zero, cleared on undo; reminders rescheduled.
+- Due date shown = next occurrence of the due day (today or later), clamped to month end. Projected payoff day = due day in the payoff month, else month end (drives the ≤ 90-day countdown).
+- Masked amounts keep the currency symbol ("₱ • • • •"), including sheet chips and impact text.
+- Debts tab route is `(tabs)/wallet.tsx` (`/debts` is onboarding 05).
+- Dashboard "in about N" counts months from now to the debt-free month; the Budget screen adds +1, so they can differ by a month — align in slice 7.
+- Engine `createdSeq` ties (same-millisecond creation) break by `sort_order`, then id — fixes a flaky order.
 
 ## Costs
 No paid services so far. See brief §19.

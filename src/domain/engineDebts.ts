@@ -11,7 +11,7 @@ export function installmentBalance(amortization: Minor, monthsLeft: number): Min
  * createdSeq follows creation order, the engine's last tie-break.
  */
 export function toEngineDebts(rows: DebtRow[], balances: Map<string, Minor>): EngineDebt[] {
-  const byCreation = [...rows].sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+  const byCreation = [...rows].sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.sortOrder - b.sortOrder || a.id.localeCompare(b.id));
   return byCreation.map((r, createdSeq) => {
     const base = {
       id: r.id,
