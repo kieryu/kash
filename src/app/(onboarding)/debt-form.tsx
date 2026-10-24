@@ -27,6 +27,8 @@ import { SegmentedControl, TextField } from '@/ui/Controls';
 import { DebtCard } from '@/ui/DebtCard';
 import { BackIcon } from '@/ui/icons';
 
+// Spoken names for the swatch row, same order as cardSwatches.
+const SWATCH_NAMES = ['navy', 'green', 'red', 'orange', 'purple', 'black'];
 const COLLAPSED = 6; // template grid shows 3×2 until "Show all"
 
 function initial(segment: Segment): DebtFormValues {
@@ -143,11 +145,11 @@ export default function DebtForm() {
               <Button variant="link" label={showAll ? 'Show fewer' : 'Show all banks'} onPress={() => setShowAll(!showAll)} />
             ) : null}
             <View style={styles.swatches}>
-              {cardSwatches.map((hex) => (
+              {cardSwatches.map((hex, i) => (
                 <Pressable
                   key={hex}
                   accessibilityRole="button"
-                  accessibilityLabel={`Card color ${hex}`}
+                  accessibilityLabel={`Card color ${SWATCH_NAMES[i]}`}
                   accessibilityState={{ selected: !customColor && v.color.toUpperCase() === hex }}
                   hitSlop={7}
                   onPress={() => {
@@ -159,6 +161,7 @@ export default function DebtForm() {
               ))}
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel="Custom card color"
                 accessibilityState={{ selected: customColor }}
                 onPress={() => setCustomColor(true)}
                 hitSlop={7}
@@ -229,7 +232,7 @@ const styles = StyleSheet.create({
   group: { gap: space.sm },
   label: { ...type.label, color: colors.muted },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  tpl: { width: '31.5%', height: 58, borderRadius: radius.input, padding: space.sm, paddingHorizontal: 10, justifyContent: 'space-between', borderWidth: 3, borderColor: 'transparent' },
+  tpl: { width: '31.5%', minHeight: 58, borderRadius: radius.input, padding: space.sm, paddingHorizontal: 10, justifyContent: 'space-between', borderWidth: 3, borderColor: 'transparent' },
   tplOn: { borderColor: colors.accent },
   tplIssuer: { ...type.captionBold, color: colors.onPrimary },
   tplSub: { ...type.micro, color: colors.onPrimary, opacity: 0.9 },

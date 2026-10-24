@@ -75,24 +75,25 @@ const textColor = {
 };
 
 const styles = StyleSheet.create({
-  primary: { ...center, height: size.buttonPrimary, borderRadius: radius.button, backgroundColor: colors.primary },
-  accent: { ...center, height: size.buttonPrimary, borderRadius: radius.button, backgroundColor: colors.accent },
+  primary: { ...center, minHeight: size.buttonPrimary, paddingVertical: space.sm, borderRadius: radius.button, backgroundColor: colors.primary },
+  accent: { ...center, minHeight: size.buttonPrimary, paddingVertical: space.sm, borderRadius: radius.button, backgroundColor: colors.accent },
   secondary: {
     ...center,
-    height: size.buttonSecondary,
+    minHeight: size.buttonSecondary,
+    paddingVertical: space.sm,
     borderRadius: radius.button,
     backgroundColor: colors.surface,
     borderWidth: size.border,
     borderColor: colors.lineStrong,
   },
-  compact: { ...center, height: size.hitTarget, borderRadius: radius.input, backgroundColor: colors.primary },
+  compact: { ...center, minHeight: size.hitTarget, paddingVertical: space.xs, borderRadius: radius.input, backgroundColor: colors.primary },
   link: { ...center, minHeight: size.hitTarget, padding: space.md },
   text: type.button,
   compactText: type.rowTitle,
   icon: { ...center, width: size.hitTarget, height: size.hitTarget, borderRadius: radius.input },
   chip: {
     ...center,
-    height: 36,
+    minHeight: 36,
     paddingHorizontal: space.md,
     borderRadius: radius.pill,
     borderWidth: size.border,

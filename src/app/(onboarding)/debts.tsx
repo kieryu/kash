@@ -95,7 +95,8 @@ const { colors, radius, size, space, type } = theme;
 
 const styles = StyleSheet.create({
   add: {
-    height: size.debtCardList,
+    minHeight: size.debtCardList,
+    padding: space.lg,
     borderRadius: radius.cardLg - 2,
     borderWidth: 2,
     borderStyle: 'dashed',

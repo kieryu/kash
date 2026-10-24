@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { APP_NAME } from '@/config/app';
@@ -23,7 +23,7 @@ export default function Welcome() {
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar style="light" />
-      <View style={styles.center}>
+      <ScrollView contentContainerStyle={styles.center} showsVerticalScrollIndicator={false}>
         <View style={styles.halo}>
           <Mascot mood="watch" size={180} />
         </View>
@@ -32,7 +32,7 @@ export default function Welcome() {
           <Text style={styles.tagline}>Your path to debt-free</Text>
         </View>
         <Text style={styles.line}>“{line}”</Text>
-      </View>
+      </ScrollView>
       <View style={styles.footer}>
         <Button variant="accent" label="Get started" onPress={() => router.push('/privacy')} />
         <Text style={styles.note}>No account needed · Works offline</Text>
@@ -45,7 +45,7 @@ const { colors, size, space, type } = theme;
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.primary, paddingHorizontal: 28, paddingBottom: space.xxl },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 28 },
+  center: { flexGrow: 1, paddingVertical: space.lg, alignItems: 'center', justifyContent: 'center', gap: 28 },
   halo: {
     width: size.lockHalo + 28,
     height: size.lockHalo + 28,

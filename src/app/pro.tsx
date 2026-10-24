@@ -103,7 +103,7 @@ export default function Pro() {
           <>
             <Button variant="accent" label={busy ? 'One moment…' : `Unlock for ${PRO_PRICE}`} disabled={busy} onPress={() => run(buyPro)} />
             <Button variant="link" label="Maybe later" onPress={close} />
-            <Text accessibilityRole="button" style={styles.restore} onPress={busy ? undefined : () => run(restorePro)}>
+            <Text accessibilityRole="button" accessibilityState={{ disabled: busy }} style={styles.restore} onPress={busy ? undefined : () => run(restorePro)}>
               Restore purchase
             </Text>
           </>

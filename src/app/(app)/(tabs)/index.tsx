@@ -197,9 +197,9 @@ export default function Dashboard() {
               <Text accessibilityRole="header" style={styles.sectionTitle}>
                 Your debts
               </Text>
-              <Text accessibilityRole="link" style={styles.link} onPress={() => router.push('/compare')}>
-                Compare strategies
-              </Text>
+              <Pressable accessibilityRole="link" onPress={() => router.push('/compare')} style={styles.linkHit}>
+                <Text style={styles.link}>Compare strategies</Text>
+              </Pressable>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carousel}>
               {snap.rows.map((d) => (
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   heroSmall: { ...type.small, color: colors.onPrimaryMuted },
   heroBig: { ...type.hero, color: colors.onPrimary },
   heroProgress: { gap: 6 },
-  heroRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  heroRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: space.sm },
   heroCaption: { ...type.caption, color: colors.onPrimaryMuted },
   movement: {
     ...type.captionBold,
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
   },
 
   section: { gap: 10 },
-  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space.sm },
+  sectionHead: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   sectionTitle: { ...type.sectionTitle, color: colors.ink },
   small: { ...type.small, color: colors.muted },
   body: { ...type.body, color: colors.muted },
@@ -377,6 +377,7 @@ const styles = StyleSheet.create({
   carousel: { gap: 10 },
   footnote: { ...type.caption, color: colors.muted, textAlign: 'center' },
   link: { ...type.label, color: colors.primary },
+  linkHit: { minHeight: size.hitTarget, justifyContent: 'center' },
   warnLink: { ...type.label, color: colors.accentText, textDecorationLine: 'underline' },
   footLink: { ...type.captionBold, color: colors.primary },
   empty: { backgroundColor: colors.surface, borderRadius: radius.card, padding: space.lg, gap: space.md },

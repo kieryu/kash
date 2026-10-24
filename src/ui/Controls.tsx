@@ -42,7 +42,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, a
             hitSlop={{ top: 7, bottom: 7 }}
             style={[styles.segment, on && styles.segmentOn]}
           >
-            <Text numberOfLines={1} style={[styles.segmentText, on && styles.segmentTextOn]}>
+            <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.segmentText, on && styles.segmentTextOn]}>
               {o.label}
             </Text>
           </Pressable>
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
 
   segments: { flexDirection: 'row', gap: 3, padding: 3, borderRadius: 11, backgroundColor: colors.segmentBg },
-  segment: { flex: 1, height: size.segment, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  segment: { flex: 1, minHeight: size.segment, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   segmentOn: { backgroundColor: colors.primary },
   segmentText: { ...type.segment, color: colors.ink },
   segmentTextOn: { ...type.label, color: colors.onPrimary },
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
   label: { ...type.label, color: colors.muted },
   input: {
     ...type.input,
-    height: size.input,
+    minHeight: size.input,
     borderRadius: radius.input,
     borderWidth: size.border,
     borderColor: colors.lineStrong,

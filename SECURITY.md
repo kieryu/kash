@@ -18,7 +18,7 @@ Kash has no account, no server, no cloud sync and no analytics. It works fully o
 - Android cloud backup of app data is turned off. A backup would be unreadable anyway, because the key can't be restored.
 
 ## App lock — built
-- Kash locks when opened, and when you come back after the auto-lock time (default 1 minute; can be "immediately").
+- Kash locks when opened, and when you come back after the auto-lock time (default 1 minute; choose immediately, 1, 5 or 15 minutes in Settings).
 - Unlock with fingerprint/face (your phone's passcode works as backup) or a 4-digit Kash PIN.
 - The PIN is stored only as a salted, slow hash (scrypt) in the phone's secure storage — never as the PIN itself.
 - 5 free tries, then waits that grow: 30 s, 1 min, 5 min, 15 min, then 1 hour each. The count lives in secure storage, so deleting or importing data doesn't reset it. Known gap: changing the phone's clock can shorten a wait.
@@ -37,7 +37,13 @@ If biometrics and the device passcode also fail, your data cannot be recovered w
 
 ## Screen privacy
 - Optional screenshot blocking — built. On Android it also hides Kash in the recent-apps view. With it off, Android's recent-apps view can show the last screen.
-- Hide balances (tap to reveal) — planned.
+- Hide balances — built. The Hide button on Home (or the Settings switch) replaces every amount with "₱ • • • •" on the dashboard, debt pages, payment sheet, check-in and compare; the "how it's calculated" page shows no numbers. The mascot covers its eyes while it's on. Tap Show to reveal.
+- Reminder notifications show only the debt's nickname, never amounts, because they can appear on the lock screen.
+
+## Encrypted backup — built
+- Settings → Export encrypted backup makes one file locked with a password you choose (at least 8 characters). AES-256-GCM, key from your password via scrypt. Without the password nobody can open it, and it can't be reset.
+- You decide where the file goes (share sheet). Kash deletes its own temporary copy right after.
+- Import replaces everything on this phone after you confirm. Your PIN and lock settings on this phone stay as they are.
 
 ## No card details, ever
-Kash never asks for card numbers, CVV, expiry dates or online banking logins.
+Kash never asks for card numbers, CVV, expiry dates or online banking logins. A nickname that looks like a card number can't be saved.

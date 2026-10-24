@@ -52,7 +52,7 @@ export function PinPad({ tone, title, subtitle, message, disabled, onComplete, o
       onPress={() => press(d)}
       style={({ pressed }) => [styles.key, { backgroundColor: c.key }, pressed && styles.pressed, locked && styles.dim]}
     >
-      <Text style={[styles.keyText, { color: c.keyText }]}>{d}</Text>
+      <Text maxFontSizeMultiplier={1.5} style={[styles.keyText, { color: c.keyText }]}>{d}</Text>
     </Pressable>
   );
 
@@ -133,7 +133,7 @@ const toneColors = {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: space.screenOnboarding },
-  top: { height: size.hitTarget, justifyContent: 'center' },
+  top: { minHeight: size.hitTarget, justifyContent: 'center' },
   header: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.md },
   title: { ...type.title, textAlign: 'center' },
   subtitle: { ...type.body, textAlign: 'center', maxWidth: 300 },
@@ -146,5 +146,5 @@ const styles = StyleSheet.create({
   keyText: type.pinKey,
   pressed: { opacity: 0.7 },
   dim: { opacity: 0.5 },
-  footer: { height: size.buttonPrimary, alignItems: 'center', justifyContent: 'center' },
+  footer: { minHeight: size.buttonPrimary, alignItems: 'center', justifyContent: 'center' },
 });

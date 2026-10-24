@@ -22,7 +22,8 @@ type Props = {
 };
 
 export function DebtCard({ variant, color, nickname, balanceText, issuer, kindLabel, network, progress = 0, onPress }: Props) {
-  const label = [nickname, issuer, balanceText].filter(Boolean).join(', ');
+  const paid = variant === 'mini' ? `${Math.round(Math.min(1, Math.max(0, progress)) * 100)}% paid off` : null;
+  const label = [nickname, issuer, balanceText, paid].filter(Boolean).join(', ');
   const body =
     variant === 'mini' ? (
       <>
@@ -66,7 +67,7 @@ export function DebtCard({ variant, color, nickname, balanceText, issuer, kindLa
       </>
     );
 
-  const style = [variant === 'mini' ? styles.mini : [styles.card, { height: variant === 'full' ? size.debtCardFull : size.debtCardList }], { backgroundColor: color }];
+  const style = [variant === 'mini' ? styles.mini : [styles.card, { minHeight: variant === 'full' ? size.debtCardFull : size.debtCardList }], { backgroundColor: color }];
 
   if (!onPress) {
     return (
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
 
   mini: {
     width: size.debtCardMiniWidth,
-    height: size.debtCardMiniHeight,
+    minHeight: size.debtCardMiniHeight,
     borderRadius: radius.card,
     padding: space.md,
     justifyContent: 'space-between',

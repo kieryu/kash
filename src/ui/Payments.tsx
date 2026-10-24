@@ -1,4 +1,5 @@
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { AccessibilityInfo, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { theme } from '@/theme';
@@ -109,9 +110,10 @@ type SheetProps = {
 
 export function LogPaymentSheet(p: SheetProps) {
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReduceMotion();
   const good = p.impact.tone === 'good';
   return (
-    <Modal visible={p.visible} transparent animationType="fade" onRequestClose={p.onClose} statusBarTranslucent>
+    <Modal visible={p.visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={p.onClose} statusBarTranslucent>
       <KeyboardAvoidingView style={styles.modal} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={p.onClose} style={styles.scrim} />
         <View accessibilityViewIsModal style={[styles.sheet, { paddingBottom: 28 + insets.bottom }]}>
@@ -151,6 +153,17 @@ export function LogPaymentSheet(p: SheetProps) {
       </KeyboardAvoidingView>
     </Modal>
   );
+}
+
+/** System "reduce motion" / "remove animations" setting. */
+function useReduceMotion() {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setOn).catch(() => {});
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setOn);
+    return () => sub.remove();
+  }, []);
+  return on;
 }
 
 const { colors, opacity, radius, size, space, type } = theme;
@@ -194,7 +207,7 @@ const styles = StyleSheet.create({
 
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 60, borderTopWidth: 1, borderTopColor: colors.divider },
   rowName: { ...type.rowTitleSm, color: colors.ink },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: space.xs, height: size.hitTarget, paddingHorizontal: 14, borderRadius: radius.pill },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: size.hitTarget, paddingHorizontal: 14, borderRadius: radius.pill },
   pillPaid: { backgroundColor: colors.primarySoft },
   pillLog: { backgroundColor: colors.surface, borderWidth: size.border, borderColor: colors.lineStrong },
   pillText: { ...type.chip, color: colors.primary },
@@ -226,7 +239,7 @@ const styles = StyleSheet.create({
   amountBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 60,
+    minHeight: 60,
     borderRadius: radius.inputLg,
     borderWidth: 2,
     borderColor: colors.primary,

@@ -1,6 +1,6 @@
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { APP_NAME } from '@/config/app';
@@ -100,40 +100,42 @@ export function LockScreen({ lock, onUnlock, onWipe }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.halo}>
-        <Mascot mood="sleep" size={160} />
-      </View>
-      <Text style={styles.title} accessibilityRole="header">
-        {APP_NAME} is locked
-      </Text>
-      <Text style={styles.body}>Your data is encrypted on this phone. Unlock to continue.</Text>
-      {notice ? (
-        <Text style={styles.body} accessibilityLiveRegion="polite">
-          {notice}
+    <SafeAreaView style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.screen} showsVerticalScrollIndicator={false}>
+        <View style={styles.halo}>
+          <Mascot mood="sleep" size={160} />
+        </View>
+        <Text style={styles.title} accessibilityRole="header">
+          {APP_NAME} is locked
         </Text>
-      ) : null}
-      <View style={styles.spacer} />
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Unlock with fingerprint"
-        onPress={tryBiometrics}
-        style={({ pressed }) => [styles.bioButton, pressed && styles.pressed]}
-      >
-        <FingerprintIcon size={44} color={colors.primary} />
-      </Pressable>
-      <Text style={styles.hint}>Touch to unlock</Text>
-      {lock.pin && (
-        <Button
-          variant="link"
-          color={colors.onPrimary}
-          label="Use PIN instead"
-          onPress={() => {
-            setNotice(null);
-            setMode('pin');
-          }}
-        />
-      )}
+        <Text style={styles.body}>Your data is encrypted on this phone. Unlock to continue.</Text>
+        {notice ? (
+          <Text style={styles.body} accessibilityLiveRegion="polite">
+            {notice}
+          </Text>
+        ) : null}
+        <View style={styles.spacer} />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Unlock with fingerprint"
+          onPress={tryBiometrics}
+          style={({ pressed }) => [styles.bioButton, pressed && styles.pressed]}
+        >
+          <FingerprintIcon size={44} color={colors.primary} />
+        </Pressable>
+        <Text style={styles.hint}>Touch to unlock</Text>
+        {lock.pin && (
+          <Button
+            variant="link"
+            color={colors.onPrimary}
+            label="Use PIN instead"
+            onPress={() => {
+              setNotice(null);
+              setMode('pin');
+            }}
+          />
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -141,9 +143,9 @@ export function LockScreen({ lock, onUnlock, onWipe }: Props) {
 const { colors, space, size, type } = theme;
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.primary },
   screen: {
-    flex: 1,
-    backgroundColor: colors.primary,
+    flexGrow: 1,
     alignItems: 'center',
     paddingHorizontal: 28,
     paddingTop: 96,

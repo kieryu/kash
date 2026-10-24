@@ -52,6 +52,7 @@ export default function Compare() {
           accessibilityRole="button"
           accessibilityLabel={current === 'custom' ? 'My own order, current strategy' : 'Switch to my own order'}
           disabled={current === 'custom'}
+          accessibilityState={{ disabled: current === 'custom' }}
           onPress={() => choose('custom')}
           style={({ pressed }) => [styles.row, pressed && styles.pressed]}
         >
@@ -112,11 +113,11 @@ const styles = StyleSheet.create({
   body: { ...type.body, color: colors.muted },
   card: { backgroundColor: colors.surface, borderRadius: radius.cardLg - 2, padding: 18, gap: 14, borderWidth: 3, borderColor: colors.surface },
   cardCurrent: { borderColor: colors.primary },
-  cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardHead: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, justifyContent: 'space-between', alignItems: 'center' },
   cardTitle: { ...type.sectionTitle, color: colors.ink },
   currentChip: { ...type.captionBold, color: colors.onPrimary, backgroundColor: colors.primary, borderRadius: radius.pill, paddingVertical: space.xs, paddingHorizontal: 10, overflow: 'hidden' },
-  stats: { flexDirection: 'row', gap: space.sm },
-  stat: { flex: 1, gap: 2 },
+  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  stat: { flexGrow: 1, flexBasis: 90, gap: 2 },
   caption: { ...type.caption, color: colors.muted },
   statValue: { ...type.rowTitle, color: colors.ink },
   tradeOff: { backgroundColor: colors.primarySoft, borderRadius: radius.card, paddingVertical: 14, paddingHorizontal: space.lg },
