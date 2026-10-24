@@ -12,11 +12,11 @@ Update the slice status table as work lands.
 | 2 | Data layer | **Done** except on-device check ("Run check" now also runs migrations + repos) |
 | 3 | Security & lock | **Done** except on-device check (new dev build needed: native modules added) |
 | 4 | UI kit + mascot poses | **Done** except on-device look check |
-| 5 | Onboarding | — |
+| 5 | Onboarding | In progress (lane A, Wave 2) |
 | 6 | Dashboard & payments | — |
 | 7 | Check-in, compare, Plan tab | — |
 | 8 | Notifications | — |
-| 9 | Encrypted backup | Logic next (Agent B, Wave 1) |
+| 9 | Encrypted backup | Logic **done** (merged, `src/backup`); screens in Wave 3 |
 | 10 | Settings, currency, Pro | — |
 | 11 | Hardening & release prep | — |
 
