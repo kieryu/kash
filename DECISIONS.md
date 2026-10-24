@@ -60,5 +60,13 @@ Balances = sum of append-only transactions. Plan, "% paid off" and "moved N mont
 ### D16. Placeholder app ID `com.kieruy.kash`
 The Android package name is permanent once uploaded to Play. Fine for dev builds; choose the final one before the first Play upload (ties into the final app name).
 
+### D17. Engine types trimmed from the PLAN draft (2026-10-24)
+- `tieBreak` → plain `createdSeq`; custom order comes only from `strategy.order` (no `customRank` copy to keep in sync).
+- Installments drop `remainingMonths`: the engine runs on balance + payment. The data layer computes balance from months left (D4).
+- `highestCost` / `hybrid` left out of `Strategy` until v1.1.
+- `shortfall` carries the `month` it happens in (a growing balance can push minimums past the budget later, not just in month 1).
+- Simulation stops early as `neverPaysOff` if total balance passes 10^15 minor units, before numbers lose precision.
+**Why:** fewer fields that can disagree; nothing the MVP screens need is lost.
+
 ## Costs
 No paid services so far. See brief §19.

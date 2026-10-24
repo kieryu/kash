@@ -8,8 +8,8 @@ Update the slice status table as work lands.
 | # | Slice | Status |
 |---|---|---|
 | 0 | Scaffold & guardrails | **Done** except on-device check (EAS dev build → "Run check" on home screen) |
-| 1 | Payoff engine | Next |
-| 2 | Data layer | — |
+| 1 | Payoff engine | **Done** |
+| 2 | Data layer | Next |
 | 3 | Security & lock | — |
 | 4 | UI kit + mascot poses | — |
 | 5 | Onboarding | — |
@@ -26,7 +26,7 @@ Screens marked * are **not designed** — propose a layout in the DESIGN.md styl
 ### 0. Scaffold & guardrails — done
 Expo SDK 58, TS strict, Expo Router (`src/app/`), EAS profiles, dev client, DM Sans, theme tokens, lint rules (no hex/raw font values outside `src/theme`; `src/engine` may only import relative files + big.js), Jest (projects `logic` = node env for engine/domain/theme, `app` = RN), `APP_NAME` in `src/config/app.json`, DB key manager, `openEncryptedDb` (fails closed), dev-only SQLCipher self-check, DECISIONS.md, SECURITY.md.
 
-### 1. Payoff engine (`src/engine`, pure TS, no UI)
+### 1. Payoff engine (`src/engine`, pure TS, no UI) — done
 Install `big.js` (+ `@types/big.js`) and dev `fast-check`. Build money/rates/minimums/yearMonth, `simulate`, snowball / avalanche / custom, shortfall & never-pays-off, `thisMonthPlan`, `explainLine`. Tests: every case in CLAUDE.md §7 plus fast-check properties (paid = principal + interest; balances never negative; total paid ≤ budget × months).
 
 ### 2. Data layer
@@ -125,59 +125,12 @@ Not stored (derived): plan, "% paid off" (paid ÷ (paid + remaining)), movement 
 
 ## Engine types (`src/engine/types.ts`)
 
-```ts
-export type Minor = number;                 // integer minor units (Number.isSafeInteger)
-export type Currency = string;              // ISO 4217
-export type DecimalStr = string;            // '0.03'
-export type YearMonth = string;             // 'YYYY-MM'
-export type DebtId = string;
-
-export type MinimumRule =
-  | { kind: 'fixed'; amount: Minor }
-  | { kind: 'percent'; percent: DecimalStr }
-  | { kind: 'percentOrFixed'; percent: DecimalStr; floor: Minor };   // higher of the two, capped at balance
-
-export type EngineDebt = {
-  id: DebtId; currency: Currency; balance: Minor;
-  monthlyRate: DecimalStr;
-  promo?: { monthlyRate: DecimalStr; until: YearMonth };
-  acceptsExtra: boolean;
-  tieBreak: { createdSeq: number; customRank?: number };
-} & (
-  | { kind: 'revolving'; minimum: MinimumRule }
-  | { kind: 'installment'; payment: Minor; remainingMonths: number; interest: 'bakedIn' | 'diminishing' }
-);
-
-export type Strategy =
-  | { kind: 'snowball' } | { kind: 'avalanche' }
-  | { kind: 'custom'; order: DebtId[] }
-  | { kind: 'highestCost' } | { kind: 'hybrid'; quickWins: 1 | 2 };   // last two: v1.1 (Pro)
-
-export type OneOffExtra = { month: YearMonth; amount: Minor };
-
-export type PlanInput = {
-  debts: EngineDebt[]; budget: Minor; currency: Currency;
-  strategy: Strategy; start: YearMonth; extras?: OneOffExtra[]; maxMonths?: number;   // default 600
-};
-
-export type DebtMonth = {
-  debtId: DebtId; opening: Minor; minimumDue: Minor; paidMinimum: Minor; paidExtra: Minor;
-  interest: Minor; principal: Minor; closing: Minor; rateUsed: DecimalStr; isTarget: boolean;
-};
-export type PlanMonth = { month: YearMonth; lines: DebtMonth[]; unspent: Minor };
-
-export type PlanResult =
-  | { status: 'ok'; months: PlanMonth[]; debtFree: YearMonth;
-      perDebt: Record<DebtId, { payoff: YearMonth; interest: Minor; paid: Minor }>;
-      totals: { interest: Minor; paid: Minor } }
-  | { status: 'shortfall'; minimumsTotal: Minor; shortBy: Minor }
-  | { status: 'neverPaysOff'; debtIds: DebtId[]; monthsSimulated: number };
-```
+See `src/engine/types.ts` (source of truth). Changes from the approved draft are in DECISIONS.md D17.
 
 Engine rules:
 - Monthly order: minimum from opening balance → pay → accrue interest on the remainder (D2). Interest = `roundHalfUp(balance × rate)` to the minor unit, big.js.
 - Installments get only their fixed payment unless `acceptsExtra` (D4); when finished, their payment rolls into the plan.
 - Extra money goes to the strategy's target; leftover rolls to the next target **in the same month**.
-- Tie-break — snowball: smaller balance → higher rate → lower `createdSeq`. Avalanche: higher rate → smaller balance → lower `createdSeq`. Custom: `customRank`, then `createdSeq`.
+- Tie-break — snowball: smaller balance → higher rate → lower `createdSeq`. Avalanche: higher rate → smaller balance → lower `createdSeq`. Custom: position in `strategy.order` (unlisted last), then `createdSeq`.
 - All debts in one run share one currency (asserted); multi-currency = one run per currency (v1.1).
 - Every result is an estimate; UI labels it so.

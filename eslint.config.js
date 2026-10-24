@@ -28,6 +28,7 @@ module.exports = defineConfig([
   // The payoff engine is pure TypeScript: no React, Expo, DB or app imports (CLAUDE.md §7).
   {
     files: ['src/engine/**/*.ts'],
+    ignores: ['**/__tests__/**'],
     rules: {
       'no-restricted-imports': [
         'error',
