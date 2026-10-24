@@ -15,8 +15,8 @@ Update the slice status table as work lands.
 | 5 | Onboarding | **Done** except on-device check. Quiz* proposed (`design/proposals/quiz.md`), not built |
 | 6 | Dashboard & payments | In progress (lane A, Wave 3) |
 | 7 | Check-in, compare, Plan tab | — |
-| 8 | Notifications | Logic **done** (`src/notifications`); deep link in slice 7; network check in slice 11 |
-| 9 | Encrypted backup | Logic **done** (`src/backup`). Screens* proposed (`design/proposals/backup-*.md`), awaiting approval |
+| 8 | Notifications | Logic **done** (`src/notifications`). Not wired: no caller of `rescheduleReminders`, permission request, Android channel; deep link in slice 7; network check in slice 11. New dev build needed |
+| 9 | Encrypted backup | **Done** except on-device check (new dev build needed: expo-sharing). Entry points not wired: Settings rows (slice 10), restore link on 04 Strategy |
 | 10 | Settings, currency, Pro | — |
 | 11 | Hardening & release prep | — |
 
@@ -65,10 +65,12 @@ Screens 01–07; "Help me choose" quiz*; Budget screen runs the live engine.
 ### 7. Check-in, compare, Plan tab
 10 Check-in (3 reasons incl. "A payment I didn't log"), 11 Compare, Plan tab* (payoff order + month table, no charts), "How was this calculated?", paid-off moment*.
 
-### 8. Notifications
+### 8. Notifications — logic done
+Built: `src/notifications/reminders.ts` — `planReminders` (pure dates, month-end clamp, skips archived/paid-off, no due reminders for auto-deducted) and `rescheduleReminders` (cancel all, schedule one-time reminders 3 months ahead, max 60, 9:00 local; nickname only, never amounts). To do: call it on app start + after debt/settings changes, permission request, Android channel, deep link (slice 7).
 expo-notifications local only: due-date (default 3 days before + on the day) and statement-day reminders; deep link to check-in. Verify FCM stays inert (network capture).
 
-### 9. Encrypted backup
+### 9. Encrypted backup — done
+Built: `src/backup/backup.ts` (envelope JSON, AES-256-GCM, scrypt N=2^15, replace-all in one DB transaction, keeps this phone's lock settings / last backup / Pro), `src/backup/preview.ts`, routes `(app)/backup/export` and `(app)/backup/import` (approved proposals in `design/proposals/backup-*.md`), `src/ui/Backup.tsx`. To do: Settings rows (slice 10), "Have a backup? Restore it" link on 04 Strategy, swap the import preview's stand-in `money()` for `src/domain/format.ts`.
 Export (AES-256-GCM, scrypt from user password, @noble/ciphers) via share sheet; import → password → preview → replace all; schema version + migrations. Flow screens*.
 
 ### 10. Settings, currency, Pro
