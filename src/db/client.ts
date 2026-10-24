@@ -1,6 +1,10 @@
+import { drizzle } from 'drizzle-orm/expo-sqlite/driver';
 import * as SQLite from 'expo-sqlite';
 
-import { isValidDbKey } from '@/security/keyManager';
+import { getOrCreateDbKey, isValidDbKey } from '@/security/keyManager';
+
+import { migrate } from './migrations';
+import * as schema from './schema';
 
 export const DB_NAME = 'kash.db';
 
@@ -47,4 +51,11 @@ export async function openEncryptedDb(key: string, opts: OpenOptions = {}): Prom
     await db.closeAsync().catch(() => undefined);
     throw e;
   }
+}
+
+/** Opens the app database with the stored key, as Drizzle, with migrations applied. */
+export async function openDb(opts: OpenOptions = {}) {
+  const db = drizzle(await openEncryptedDb(await getOrCreateDbKey(), opts), { schema });
+  migrate(db);
+  return db;
 }

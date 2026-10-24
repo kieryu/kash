@@ -9,8 +9,8 @@ Update the slice status table as work lands.
 |---|---|---|
 | 0 | Scaffold & guardrails | **Done** except on-device check (EAS dev build → "Run check" on home screen) |
 | 1 | Payoff engine | **Done** |
-| 2 | Data layer | Next |
-| 3 | Security & lock | — |
+| 2 | Data layer | **Done** except on-device check ("Run check" now also runs migrations + repos) |
+| 3 | Security & lock | Next |
 | 4 | UI kit + mascot poses | — |
 | 5 | Onboarding | — |
 | 6 | Dashboard & payments | — |
@@ -29,7 +29,7 @@ Expo SDK 58, TS strict, Expo Router (`src/app/`), EAS profiles, dev client, DM S
 ### 1. Payoff engine (`src/engine`, pure TS, no UI) — done
 Install `big.js` (+ `@types/big.js`) and dev `fast-check`. Build money/rates/minimums/yearMonth, `simulate`, snowball / avalanche / custom, shortfall & never-pays-off, `thisMonthPlan`, `explainLine`. Tests: every case in CLAUDE.md §7 plus fast-check properties (paid = principal + interest; balances never negative; total paid ≤ budget × months).
 
-### 2. Data layer
+### 2. Data layer — done
 Drizzle ORM (expo-sqlite driver) + versioned forward-only migrations on start; repositories in `src/db/repositories/`; balance derivation from transactions; `debt → EngineDebt` mapping (`src/domain`); card-number detector; card template catalog JSON (`src/data`).
 
 ### 3. Security & lock
@@ -100,7 +100,7 @@ debts
   rate_entered_as                -- 'monthly' | 'annual'
   min_rule                       -- fixed | percent | percent_or_fixed
   min_percent TEXT?, min_fixed_minor?
-  amortization_minor?, remaining_months?, interest_method?   -- 'baked_in' | 'diminishing'
+  amortization_minor?, interest_method?   -- 'baked_in' | 'diminishing'; set ⇔ installment (D18)
   accepts_extra INTEGER          -- default 0 for installments (D4)
   statement_day?, due_day?, credit_limit_minor?, late_fee_minor?
   promo_rate TEXT?, promo_ends_on?
@@ -115,12 +115,12 @@ transactions                     -- append-only; balance = SUM(amount_minor)
 statement_checkins
   id, debt_id, statement_date, expected_minor, statement_minor, reason, transaction_id, created_at
 
-settings (single row)            -- home_currency, locale, strategy, budget_minor, plan_start_month, lock_timeout,
+settings (single row)            -- home_currency, strategy, budget_minor, plan_start_month, lock_timeout_sec,
                                  -- hide_balances, block_screenshots, reminder_days_before, last_backup_at, onboarding_done
 entitlement (single row)         -- is_pro, source ('play'|'test'), checked_at
-fx_rates                         -- from, to, rate TEXT, as_of (unused until v1.1)
 ```
 PIN hash/salt/KDF params/failed-attempt counter live in SecureStore, not the DB.
+Real DDL (CHECKs, append-only trigger): `src/db/migrations.ts`. Not yet created: `fx_rates` (v1.1).
 Not stored (derived): plan, "% paid off" (paid ÷ (paid + remaining)), movement (engine with vs. without latest transaction).
 
 ## Engine types (`src/engine/types.ts`)

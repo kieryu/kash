@@ -1,6 +1,8 @@
 import * as SQLite from 'expo-sqlite';
 
-import { openEncryptedDb } from '@/db/client';
+import { openDb, openEncryptedDb } from '@/db/client';
+import { createDebt } from '@/db/repositories/debts';
+import { balanceOf } from '@/db/repositories/transactions';
 import { getOrCreateDbKey } from '@/security/keyManager';
 
 // Development-only check that SQLCipher works on a real device. Uses a throwaway database file.
@@ -62,6 +64,33 @@ export async function runDbSelfCheck(): Promise<CheckStep[]> {
 
   await step(steps, 'Same key on second call', async () => {
     if ((await getOrCreateDbKey()) !== key) throw new Error('key changed between calls');
+  });
+
+  await SQLite.deleteDatabaseAsync(CHECK_DB).catch(() => undefined);
+
+  await step(steps, 'Migrations + repositories through Drizzle', async () => {
+    const db = await openDb({ name: CHECK_DB, useNewConnection: true });
+    try {
+      const id = createDebt(
+        db,
+        {
+          nickname: 'Self-check',
+          kind: 'credit_card',
+          color: 'gray',
+          currency: 'PHP',
+          monthlyRate: '0.03',
+          rateEnteredAs: 'monthly',
+          minRule: 'fixed',
+          minFixedMinor: 50000,
+          acceptsExtra: true,
+          autoDeducted: false,
+        },
+        { balanceMinor: 1845000, on: '2026-10-24' },
+      );
+      if (balanceOf(db, id) !== 1845000) throw new Error('balance mismatch');
+    } finally {
+      await db.$client.closeAsync();
+    }
   });
 
   await SQLite.deleteDatabaseAsync(CHECK_DB).catch(() => undefined);

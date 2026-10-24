@@ -68,5 +68,14 @@ The Android package name is permanent once uploaded to Play. Fine for dev builds
 - Simulation stops early as `neverPaysOff` if total balance passes 10^15 minor units, before numbers lose precision.
 **Why:** fewer fields that can disagree; nothing the MVP screens need is lost.
 
+### D18. Data layer details (2026-10-24)
+- **Hand-written SQL migrations**, not drizzle-kit: `src/db/migrations.ts`, one array per version, `PRAGMA user_version` tracks it, each version in one transaction. A DB from a newer app is refused. A test checks the Drizzle schema matches the real tables.
+- **The DB guards the money rules**: amounts must be SQLite integers; payments negative, charges/fees positive; one reversal per transaction; `transactions` rejects UPDATE (append-only trigger); a debt is either revolving (min rule) or installment (amortization), never both.
+- **Repository tests use Node's built-in SQLite** behind the real Drizzle expo-sqlite driver — no extra dependency, same query code as the app.
+- Dropped from the v1 schema draft: `remaining_months` (goes stale; months left come from the engine), `settings.locale` (use the device locale), `fx_rates` (add with multi-currency in v1.1).
+- Promo end date counts through the whole month it falls in (engine works in months).
+- Repositories are synchronous (expo-sqlite sync API, same as Drizzle's driver). Fine at this data size.
+**Why:** fewest moving parts that still make wrong money data impossible to write.
+
 ## Costs
 No paid services so far. See brief §19.
