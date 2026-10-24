@@ -1,4 +1,5 @@
-import Svg, { Circle, Path } from 'react-native-svg';
+import type { ReactNode } from 'react';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 type IconProps = { size: number; color: string };
 
@@ -60,3 +61,51 @@ export function CheckBadge({ size, color, checkColor }: IconProps & { checkColor
     </Svg>
   );
 }
+
+function Stroke({ size, color, children }: IconProps & { children: ReactNode }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      {children}
+    </Svg>
+  );
+}
+
+export const EyeIcon = (p: IconProps) => (
+  <Stroke {...p}>
+    <Path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+    <Circle cx={12} cy={12} r={3} />
+  </Stroke>
+);
+
+export const PlusIcon = (p: IconProps) => (
+  <Stroke {...p}>
+    <Path d="M12 5v14M5 12h14" />
+  </Stroke>
+);
+
+// Tab bar
+export const HomeIcon = (p: IconProps) => (
+  <Stroke {...p}>
+    <Path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />
+  </Stroke>
+);
+
+export const PlanIcon = (p: IconProps) => (
+  <Stroke {...p}>
+    <Path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6" />
+  </Stroke>
+);
+
+export const CardIcon = (p: IconProps) => (
+  <Stroke {...p}>
+    <Rect x={3} y={6} width={18} height={13} rx={2} />
+    <Path d="M3 10h18" />
+  </Stroke>
+);
+
+export const SettingsIcon = (p: IconProps) => (
+  <Stroke {...p}>
+    <Circle cx={12} cy={12} r={3} />
+    <Path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" />
+  </Stroke>
+);
