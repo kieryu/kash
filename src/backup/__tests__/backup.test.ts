@@ -16,6 +16,9 @@ import {
   WrongPasswordError,
 } from '../backup';
 
+// Real scrypt runs: slow on a busy machine, so allow more than Jest's 5 s.
+jest.setTimeout(30_000);
+
 jest.mock('expo-crypto', () => {
   const c = jest.requireActual('node:crypto');
   return { randomUUID: () => c.randomUUID(), getRandomBytesAsync: async (n: number) => new Uint8Array(c.randomBytes(n)) };

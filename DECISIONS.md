@@ -177,5 +177,11 @@ It opens only from a user tap on something Pro, so no weekly "last shown" counte
 - "Keep this card in my wallet" opens the Debts tab (paid-off cards already live there); not a setting. "Keep going" is amber.
 - One success haptic via `expo-haptics` (no network, adds Android VIBRATE; new dev build). No confetti or mascot animation (v1.1).
 
+### D36. "Help me choose" quiz (2026-10-26, approved proposal)
+- One route `/quiz` with two steps; result returns to 04 as a `recommended` param. Own order = yes → My own order; else quick wins → Snowball, saving money → Avalanche. Only free strategies are recommended.
+- The recommendation only preselects a card on 04 (with a "Recommended for you" chip); nothing is saved until "Use X". Q1 answer kept when going back from Q2.
+- Mascot lines in the quiz are our own copy (proposal had none).
+- Scrypt-heavy test files get a longer Jest timeout (busy-machine flakes); app code unchanged.
+
 ## Costs
 No paid services so far. See brief §19.

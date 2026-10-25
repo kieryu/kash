@@ -12,7 +12,7 @@ Update the slice status table as work lands.
 | 2 | Data layer | **Done** except on-device check ("Run check" now also runs migrations + repos) |
 | 3 | Security & lock | **Done** except on-device check (new dev build needed: native modules added) |
 | 4 | UI kit + mascot poses | **Done** except on-device look check |
-| 5 | Onboarding | **Done** except on-device check. Quiz* proposed (`design/proposals/quiz.md`), not built |
+| 5 | Onboarding | **Done** except on-device check. Quiz built from approved proposal |
 | 6 | Dashboard & payments | **Done** except on-device check, incl. Debts tab and edit/archive/delete (approved proposals) |
 | 7 | Check-in, compare, Plan tab | **Done** except on-device check: 10 Check-in, 11 Compare, How was this calculated, reminder deep link + permission + channel. Plan tab and paid-off moment built from approved proposals (new dev build: expo-haptics) |
 | 8 | Notifications | Logic **done** (`src/notifications`). Not wired: no caller of `rescheduleReminders`, permission request, Android channel; deep link in slice 7; network check in slice 11. New dev build needed |

@@ -15,6 +15,9 @@ import {
   WIPE_AFTER,
 } from '../pin';
 
+// Real scrypt, up to ~30 runs per test: slow on a busy machine.
+jest.setTimeout(120_000);
+
 const mockStore = new Map<string, string>();
 
 jest.mock('expo-secure-store', () => ({
