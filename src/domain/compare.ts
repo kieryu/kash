@@ -7,6 +7,7 @@ import { monthsBetween } from './format';
 // 11 Compare strategies: the same snapshot and budget under each free strategy.
 
 export type StrategyKey = Settings['strategy'];
+export const STRATEGY_NAMES: Record<StrategyKey, string> = { snowball: 'Snowball', avalanche: 'Avalanche', custom: 'My own order' };
 export type StrategyOutcome = { debtFree: YearMonth; interest: Minor; firstGone: YearMonth } | null;
 
 /** Debt-free month, total interest and first payoff month; null when there's no debt-free date at this budget. */

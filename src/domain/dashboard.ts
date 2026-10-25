@@ -265,3 +265,39 @@ export function debtsList(s: Snapshot, today: string) {
 export function paidOffText(r: DebtRow): string {
   return r.paidOffOn ? `Paid off ${formatYearMonth(r.paidOffOn.slice(0, 7), undefined, 'short')}` : 'Paid off';
 }
+
+// --- Plan tab ---
+
+export type PlanMonthRow = { month: YearMonth; paid: Minor; interest: Minor; left: Minor; lines: DebtMonth[] };
+
+/** Month table: totals per month of the projection, lines for the expanded view. Empty without a debt-free date. */
+export function planMonths(result: PlanResult): PlanMonthRow[] {
+  if (result.status !== 'ok') return [];
+  return result.months.map((m) => ({
+    month: m.month,
+    paid: m.lines.reduce((s, l) => s + plannedAmount(l), 0),
+    interest: m.lines.reduce((s, l) => s + l.interest, 0),
+    left: m.lines.reduce((s, l) => s + l.closing, 0),
+    lines: m.lines,
+  }));
+}
+
+// --- Paid-off moment ---
+
+/** Numbers for the paid-off screen (design/proposals/paid-off.md), all from stored rows. */
+export function paidOffSummary(s: Snapshot, id: string, today: string) {
+  const bal = balancesOf(s.txs);
+  const left = s.rows.filter((r) => (bal.get(r.id) ?? 0) > 0);
+  const plan = monthPlan(s);
+  // This month's plan still lists the paid debt as focus; the extra moves to the next one.
+  const nextId = plan.focusId === id ? plan.nextFocusId : plan.focusId;
+  const result = projection(s);
+  return {
+    isLast: left.length === 0,
+    paidOnThis: progress(s.txs.filter((t) => t.debtId === id)).paid,
+    totalPaid: progress(s.txs).paid,
+    debtsLeft: left.length,
+    nextName: left.find((r) => r.id === nextId)?.nickname ?? null,
+    debtFree: left.length > 0 && result.status === 'ok' ? countdown(today, debtFreeDate(s.rows, result)) : null,
+  };
+}

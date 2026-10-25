@@ -8,6 +8,7 @@ import { getAppDb } from '@/db/client';
 import { checkInImpact, impactText, REASON_LABELS, REASON_NOTES, reasonsFor, saveCheckIn, statementDate, type CheckInReason } from '@/domain/checkin';
 import { balancesOf, loadSnapshot, moneyText, shortDate, type LoadedSnapshot } from '@/domain/dashboard';
 import { parseMoney, today } from '@/domain/format';
+import { firstPayoff } from '@/domain/payments';
 import { rescheduleReminders } from '@/notifications/reminders';
 import { theme } from '@/theme';
 import { Note } from '@/ui/Backup';
@@ -62,7 +63,9 @@ export default function CheckIn() {
   const save = async () => {
     if (amount === null) return;
     const db = await getAppDb();
-    if (saveCheckIn(db, debt.id, amount, reason, on)) rescheduleReminders(db).catch(() => {});
+    const changed = saveCheckIn(db, debt.id, amount, reason, on);
+    if (changed) rescheduleReminders(db).catch(() => {});
+    if (changed && firstPayoff(db, debt.id)) return router.replace({ pathname: '/paid-off/[id]', params: { id: debt.id } });
     close();
   };
 

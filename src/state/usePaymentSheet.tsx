@@ -1,9 +1,10 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 
 import { getAppDb } from '@/db/client';
 import { currencySymbol, moneyText } from '@/domain/dashboard';
 import { currentYearMonth, parseMoney, today } from '@/domain/format';
-import { amountInputText, savePayment, sheetChips, sheetImpact, sheetTitle, undoPayment, type SheetTarget } from '@/domain/payments';
+import { amountInputText, firstPayoff, savePayment, sheetChips, sheetImpact, sheetTitle, undoPayment, type SheetTarget } from '@/domain/payments';
 import { rescheduleReminders } from '@/notifications/reminders';
 import { LogPaymentSheet } from '@/ui/Payments';
 
@@ -38,6 +39,7 @@ export function usePaymentSheet(onChange: () => void, hide: boolean) {
       const changed = savePayment(db, target, amount, currentYearMonth(), today());
       setTarget(null);
       afterWrite(changed, db);
+      if (changed && firstPayoff(db, target.debtId)) router.push({ pathname: '/paid-off/[id]', params: { id: target.debtId } });
     };
     sheet = (
       <LogPaymentSheet

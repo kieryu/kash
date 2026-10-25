@@ -110,3 +110,22 @@ export function syncPaidOff(db: Db, debtId: string, on: string): boolean {
   updateDebt(db, debtId, { paidOffOn: done ? on : null });
   return true;
 }
+
+/**
+ * Paid-off moment shows once per debt: true only when the balance is at zero now and never reached
+ * zero before (in write order). Undo + re-pay doesn't show it again. Derived, nothing stored (D12).
+ */
+export function firstPayoff(db: Db, debtId: string): boolean {
+  // listTransactions is newest first; reversed + stable sort keeps same-millisecond rows oldest first.
+  const txs = listTransactions(db, debtId)
+    .reverse()
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  let bal = 0;
+  let hits = 0;
+  for (const t of txs) {
+    const before = bal;
+    bal += t.amountMinor;
+    if (before > 0 && bal <= 0) hits++;
+  }
+  return bal <= 0 && hits === 1;
+}

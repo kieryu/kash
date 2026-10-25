@@ -31,6 +31,7 @@ Guard: `src/config/__tests__/networkGuard.test.ts` fails `npm run check` if a kn
 | `expo-crypto` | No. | Random bytes from the OS. |
 | `@noble/hashes`, `@noble/ciphers`, `big.js` | No. | Pure JS math. |
 | `expo-local-authentication` | No. | OS biometric / passcode prompt. |
+| `expo-haptics` | No. | Vibration only (adds Android `VIBRATE` permission). Paid-off moment. |
 | `expo-screen-capture` | No. | Sets FLAG_SECURE. |
 | `expo-file-system` | Has download/upload APIs. | Unused. We only write a temp file to cache and use the OS file picker. |
 | `expo-sharing` | No. Hands the file to the OS share sheet. | Where the user sends it (Drive, email) is their choice and happens outside Kash. |

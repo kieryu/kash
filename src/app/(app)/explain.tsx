@@ -13,9 +13,10 @@ import { BackScreen, Note } from '@/ui/Backup';
 
 const NAMES: Record<Settings['strategy'], string> = { snowball: 'Snowball', avalanche: 'Avalanche', custom: 'My own order' };
 
-// "How was this calculated?" (§7): this month's numbers per debt, from explainLine. `id` narrows to one debt.
+// "How was this calculated?" (§7): one month's numbers per debt, from explainLine. `id` narrows to one debt;
+// `month` (Plan tab) picks a later month of the projection, default this month.
 export default function Explain() {
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, month } = useLocalSearchParams<{ id?: string; month?: string }>();
   const [snap, setSnap] = useState<(Snapshot & { settings: Settings }) | null>(null);
   useEffect(() => {
     getAppDb().then((db) => setSnap(loadSnapshot(db)));
@@ -28,7 +29,9 @@ export default function Explain() {
   const result = projection(snap);
   const debts = new Map(toEngineDebts(snap.rows, balancesOf(snap.txs)).map((d) => [d.id, d]));
   const names = new Map(snap.rows.map((r) => [r.id, r.nickname]));
-  const lines = plan.lines.filter((l) => !id || l.debtId === id);
+  const shownMonth = month ?? snap.month;
+  const monthLines = shownMonth === snap.month ? plan.lines : result.status === 'ok' ? (result.months.find((m) => m.month === shownMonth)?.lines ?? []) : [];
+  const lines = monthLines.filter((l) => (!id || l.debtId === id) && (shownMonth === snap.month || l.opening > 0));
   const end =
     result.status === 'ok'
       ? `That lands on ${formatYearMonth(result.debtFree)}, with about ${money(result.totals.interest)} in total interest.`
@@ -54,9 +57,9 @@ export default function Explain() {
           {lines.map((line) => (
             <View key={line.debtId} style={styles.card}>
               <Text accessibilityRole="header" style={styles.cardTitle}>
-                {names.get(line.debtId)} · {formatYearMonth(snap.month)}
+                {names.get(line.debtId)} · {formatYearMonth(shownMonth)}
               </Text>
-              {explainRows(debts.get(line.debtId)!, line).map((r) => (
+              {explainRows(debts.get(line.debtId)!, line, undefined, shownMonth !== snap.month).map((r) => (
                 <View key={r.label} style={styles.row} accessible>
                   <View style={styles.rowHead}>
                     <Text style={styles.rowLabel}>{r.label}</Text>

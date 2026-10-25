@@ -11,7 +11,8 @@ import { formatMoney, formatPercent, minorDigits } from './format';
 
 export type ExplainRow = { label: string; formula: string; result: string };
 
-export function explainRows(debt: EngineDebt, line: DebtMonth, locale?: string): ExplainRow[] {
+/** `projected` = a later month of the plan (Plan tab), whose opening balance comes from the month before. */
+export function explainRows(debt: EngineDebt, line: DebtMonth, locale?: string, projected = false): ExplainRow[] {
   const e = explainLine(debt, line);
   const money = (n: Minor) => formatMoney(n, debt.currency, locale);
   const r = e.minimum.rule;
@@ -28,7 +29,7 @@ export function explainRows(debt: EngineDebt, line: DebtMonth, locale?: string):
   // Unrounded interest in major units, so the rounding step is visible ("₱80.1315 → ₱80.13").
   const exact = new Big(e.interest.exact).div(10 ** minorDigits(debt.currency)).toFixed();
   return [
-    { label: 'Balance at the start of the month', formula: 'Sum of everything logged before this month', result: money(line.opening) },
+    { label: 'Balance at the start of the month', formula: projected ? 'Last month’s ending balance in the plan' : 'Sum of everything logged before this month', result: money(line.opening) },
     { label: 'Minimum due', formula: min, result: money(e.minimum.result) },
     {
       label: 'Planned payment',

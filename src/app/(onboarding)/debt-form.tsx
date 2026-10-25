@@ -24,6 +24,7 @@ import {
   type Segment,
 } from '@/domain/debtForm';
 import { annualFromMonthly, formatMoney, formatPercent, parseMoney, parsePercent, today } from '@/domain/format';
+import { firstPayoff } from '@/domain/payments';
 import { canAddDebt, readOnlyIds } from '@/domain/plan';
 import { rescheduleReminders } from '@/notifications/reminders';
 import { cardSwatches, theme } from '@/theme';
@@ -92,8 +93,9 @@ export default function DebtForm() {
       const e = parseDebtEdit(v, orig.values, orig.balance, currency);
       if (!e.ok) return setErrors(e.errors);
       const db = await getAppDb();
-      saveDebtEdit(db, id, e.edit, today());
+      const changed = saveDebtEdit(db, id, e.edit, today());
       reschedule(db); // due day may have changed
+      if (changed && firstPayoff(db, id)) return router.replace({ pathname: '/paid-off/[id]', params: { id } });
       return router.back();
     }
     const r = parseDebtForm(v, currency);
