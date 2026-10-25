@@ -1,10 +1,13 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { APP_NAME } from '@/config/app';
 import { getAppDb } from '@/db/client';
+import { getDebt, listDebts, updateDebt } from '@/db/repositories/debts';
+import { getEntitlement } from '@/db/repositories/settings';
+import { balanceOf } from '@/db/repositories/transactions';
 import type { DebtRow, TransactionRow } from '@/db/schema';
 import {
   countdown,
@@ -22,6 +25,8 @@ import {
 } from '@/domain/dashboard';
 import { KIND_LABELS, templateById } from '@/domain/debtForm';
 import { annualFromMonthly, formatPercent, today } from '@/domain/format';
+import { canAddDebt } from '@/domain/plan';
+import { rescheduleReminders } from '@/notifications/reminders';
 import { usePaymentSheet } from '@/state/usePaymentSheet';
 import { theme } from '@/theme';
 import { Button, IconButton } from '@/ui/Button';
@@ -31,13 +36,18 @@ import { Note } from '@/ui/Backup';
 import { BackIcon } from '@/ui/icons';
 import { Mascot } from '@/ui/Mascot';
 
-// 09 Debt detail. Edit / archive / delete await approval (design/proposals/debt-edit.md).
+// 09 Debt detail. Archived debts show a Restore view (design/proposals/debt-edit.md).
 export default function DebtDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [snap, setSnap] = useState<LoadedSnapshot | null>(null);
+  const [archived, setArchived] = useState<{ debt: DebtRow; balance: number } | null>(null);
   const refresh = useCallback(() => {
-    getAppDb().then((db) => setSnap(loadSnapshot(db)));
-  }, []);
+    getAppDb().then((db) => {
+      const row = getDebt(db, id);
+      setArchived(row?.archivedAt ? { debt: row, balance: balanceOf(db, id) } : null);
+      setSnap(loadSnapshot(db));
+    });
+  }, [id]);
   useFocusEffect(refresh);
 
   const hide = snap?.settings.hideBalances ?? false;
@@ -45,6 +55,7 @@ export default function DebtDetail() {
   const model = useMemo(() => (snap ? build(snap, id) : null), [snap, id]);
 
   if (!snap) return null;
+  if (archived) return <Archived debt={archived.debt} balance={archived.balance} hide={hide} />;
   if (!model) {
     return (
       <SafeAreaView style={styles.screen}>
@@ -73,7 +84,10 @@ export default function DebtDetail() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <Header />
+      <Header
+        // Read-only on the free plan stays read-only: Edit opens Kash Pro (D28).
+        onEdit={() => (snap.readOnly.has(debt.id) ? router.push('/pro') : router.push({ pathname: '/debt/[id]/edit', params: { id: debt.id } }))}
+      />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <DebtCard
           variant="full"
@@ -192,13 +206,47 @@ function build(snap: Snapshot, id: string) {
   };
 }
 
-function Header() {
+function Header({ onEdit }: { onEdit?: () => void }) {
   return (
     <View style={styles.header}>
       <IconButton accessibilityLabel="Back" onPress={() => router.back()}>
         <BackIcon size={24} color={colors.ink} />
       </IconButton>
+      {onEdit ? (
+        <Pressable accessibilityRole="button" accessibilityLabel="Edit debt" onPress={onEdit} style={({ pressed }) => [styles.pill, pressed && styles.pressed]}>
+          <Text style={styles.pillText}>Edit</Text>
+        </Pressable>
+      ) : null}
     </View>
+  );
+}
+
+/** Archived: out of the plan and totals; history kept. Restore puts it back (paywall when at the free limit). */
+function Archived({ debt, balance, hide }: { debt: DebtRow; balance: number; hide: boolean }) {
+  const restore = async () => {
+    const db = await getAppDb();
+    if (!canAddDebt(listDebts(db).length, getEntitlement(db).isPro)) return router.push('/pro');
+    updateDebt(db, debt.id, { archivedAt: null });
+    rescheduleReminders(db).catch(() => {});
+    router.back();
+  };
+  return (
+    <SafeAreaView style={styles.screen}>
+      <Header />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <DebtCard
+          variant="full"
+          color={debt.color}
+          nickname={debt.nickname}
+          balanceText={moneyText(Math.max(0, balance), debt.currency, hide)}
+          issuer={debt.issuer ?? KIND_LABELS[debt.kind]}
+          kindLabel={KIND_LABELS[debt.kind]}
+          network={templateById(debt.templateId)?.network}
+        />
+        <Note>Archived. It’s not in your plan or totals. Its history is kept.</Note>
+        <Button label="Restore" onPress={restore} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -247,11 +295,22 @@ function historyLabel(t: TransactionRow, txs: TransactionRow[]): string {
   return HISTORY_LABELS[t.type];
 }
 
-const { colors, radius, space, type } = theme;
+const { colors, radius, size, space, type } = theme;
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  header: { flexDirection: 'row', paddingHorizontal: space.lg, paddingTop: space.sm },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: space.lg, paddingTop: space.sm },
+  pill: {
+    minHeight: size.hitTarget,
+    justifyContent: 'center',
+    paddingHorizontal: space.lg,
+    borderRadius: radius.pill,
+    borderWidth: size.border,
+    borderColor: colors.lineStrong,
+    backgroundColor: colors.surface,
+  },
+  pillText: { ...type.label, color: colors.primary },
+  pressed: { opacity: 0.85 },
   padded: { paddingHorizontal: space.screenApp },
   content: { paddingHorizontal: space.screenApp, paddingTop: space.xs, paddingBottom: space.xl, gap: space.lg },
   card: { backgroundColor: colors.surface, borderRadius: radius.cardLg - 2, padding: 18, gap: 10 },

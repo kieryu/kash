@@ -13,7 +13,7 @@ jest.mock('expo-crypto', () => ({ randomUUID: () => jest.requireActual('node:cry
 const mockDb = testDb();
 const db = mockDb;
 jest.mock('@/db/client', () => ({ getAppDb: () => Promise.resolve(mockDb) }));
-jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn(), replace: jest.fn(), dismissAll: jest.fn() } }));
+jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({}), router: { back: jest.fn(), push: jest.fn(), replace: jest.fn(), dismissAll: jest.fn() } }));
 
 it('saves a debt, then runs the plan and finishes onboarding', async () => {
   await render(<DebtForm />);

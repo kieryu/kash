@@ -1,17 +1,21 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View, type KeyboardTypeOptions } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View, type KeyboardTypeOptions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { APP_NAME } from '@/config/app';
 import { getAppDb } from '@/db/client';
-import { createDebt, listDebts } from '@/db/repositories/debts';
+import { createDebt, deleteDebt, getDebt, listDebts, updateDebt } from '@/db/repositories/debts';
 import { getEntitlement, getSettings } from '@/db/repositories/settings';
+import { balanceOf } from '@/db/repositories/transactions';
 import {
   CUSTOM_TEMPLATE,
+  formValuesOf,
   isInstallment,
+  parseDebtEdit,
   parseDebtForm,
+  saveDebtEdit,
   SEGMENTS,
   templateById,
   templatesFor,
@@ -20,7 +24,8 @@ import {
   type Segment,
 } from '@/domain/debtForm';
 import { annualFromMonthly, formatMoney, formatPercent, parseMoney, parsePercent, today } from '@/domain/format';
-import { canAddDebt } from '@/domain/plan';
+import { canAddDebt, readOnlyIds } from '@/domain/plan';
+import { rescheduleReminders } from '@/notifications/reminders';
 import { cardSwatches, theme } from '@/theme';
 import { Button, IconButton } from '@/ui/Button';
 import { SegmentedControl, TextField } from '@/ui/Controls';
@@ -36,17 +41,34 @@ function initial(segment: Segment): DebtFormValues {
   return { segment, templateId: t.id, color: t.color, nickname: '', balance: '', rate: '', minimum: '', payment: '', monthsLeft: '', dueDay: '' };
 }
 
-// 06 Add a debt.
+const reschedule = (db: Awaited<ReturnType<typeof getAppDb>>) => rescheduleReminders(db).catch(() => {});
+
+// 06 Add a debt; also Edit debt at /debt/[id]/edit (design/proposals/debt-edit.md).
 export default function DebtForm() {
+  const { id } = useLocalSearchParams<{ id?: string }>();
   const [v, setV] = useState<DebtFormValues>(() => initial('card'));
+  // Edit mode: the stored values and balance the form started from.
+  const [orig, setOrig] = useState<{ values: DebtFormValues; balance: number; nickname: string } | null>(null);
   const [errors, setErrors] = useState<Partial<Record<DebtFormField, string>>>({});
   const [currency, setCurrency] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [customColor, setCustomColor] = useState(false);
 
   useEffect(() => {
-    getAppDb().then((db) => setCurrency(getSettings(db).homeCurrency));
-  }, []);
+    getAppDb().then((db) => {
+      const row = id ? getDebt(db, id) : undefined;
+      if (!id) return setCurrency(getSettings(db).homeCurrency);
+      if (!row) return router.back();
+      // Over the free limit = read-only (D28).
+      if (readOnlyIds(listDebts(db), getEntitlement(db).isPro).has(id)) return router.replace('/pro');
+      const balance = balanceOf(db, id);
+      const values = formValuesOf(row, balance);
+      setV(values);
+      setOrig({ values, balance, nickname: row.nickname });
+      setCustomColor(!(cardSwatches as readonly string[]).includes(values.color) && values.color !== templateById(values.templateId)?.color);
+      setCurrency(row.currency);
+    });
+  }, [id]);
 
   const set = (patch: Partial<DebtFormValues>) => setV((cur) => ({ ...cur, ...patch }));
   const tpl = templateById(v.templateId) ?? CUSTOM_TEMPLATE;
@@ -66,6 +88,14 @@ export default function DebtForm() {
 
   const save = async () => {
     if (!currency) return;
+    if (id && orig) {
+      const e = parseDebtEdit(v, orig.values, orig.balance, currency);
+      if (!e.ok) return setErrors(e.errors);
+      const db = await getAppDb();
+      saveDebtEdit(db, id, e.edit, today());
+      reschedule(db); // due day may have changed
+      return router.back();
+    }
     const r = parseDebtForm(v, currency);
     if (!r.ok) return setErrors(r.errors);
     const db = await getAppDb();
@@ -73,6 +103,42 @@ export default function DebtForm() {
     createDebt(db, r.debt, { balanceMinor: r.openingMinor, on: today() });
     router.back();
   };
+
+  const archive = () =>
+    Alert.alert(
+      `Archive ${orig?.nickname}?`,
+      'It leaves your plan and dashboard. History is kept and you can restore it from the Debts tab.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Archive',
+          onPress: async () => {
+            const db = await getAppDb();
+            updateDebt(db, id!, { archivedAt: new Date().toISOString() });
+            reschedule(db);
+            router.dismissTo('/');
+          },
+        },
+      ],
+    );
+
+  const remove = () =>
+    Alert.alert(`Delete ${orig?.nickname} and its history?`, 'This can’t be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          const db = await getAppDb();
+          deleteDebt(db, id!);
+          reschedule(db);
+          router.dismissTo('/');
+        },
+      },
+    ]);
+
+  const editing = Boolean(id);
+  if (editing && !orig) return <SafeAreaView style={styles.screen} />;
 
   const field = (key: DebtFormField, label: string, keyboardType: KeyboardTypeOptions, placeholder?: string) => (
     <View style={styles.cell}>
@@ -88,7 +154,7 @@ export default function DebtForm() {
           <BackIcon size={24} color={colors.ink} />
         </IconButton>
         <Text accessibilityRole="header" style={styles.title}>
-          Add a debt
+          {editing ? 'Edit debt' : 'Add a debt'}
         </Text>
       </View>
       <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -97,6 +163,8 @@ export default function DebtForm() {
             accessibilityLabel="Debt type"
             options={SEGMENTS}
             value={v.segment}
+            // Changing revolving ↔ installment changes the math: delete and re-add instead.
+            disabled={editing}
             onChange={(segment) => {
               setV((cur) => ({ ...initial(segment), nickname: cur.nickname }));
               setErrors({});
@@ -188,7 +256,7 @@ export default function DebtForm() {
             </View>
           ) : (
             <View style={styles.row}>
-              {field('balance', 'Current balance', 'decimal-pad')}
+              {editing ? null : field('balance', 'Current balance', 'decimal-pad')}
               {field('rate', optional ? 'Interest / month (optional)' : 'Interest / month', 'decimal-pad', '3%')}
             </View>
           )}
@@ -197,6 +265,8 @@ export default function DebtForm() {
             {field('dueDay', v.segment === 'card' ? 'Due day' : 'Due day (optional)', 'number-pad', '1–31')}
             {installment ? <View style={styles.cell} /> : null}
           </View>
+
+          {editing && !installment ? <Text style={styles.hint}>To change the balance, use Update balance.</Text> : null}
 
           <Text style={styles.hint}>
             {installment
@@ -212,9 +282,16 @@ export default function DebtForm() {
             </Svg>
             <Text style={styles.safeText}>{APP_NAME} never asks for your card number, CVV or expiry. Not affiliated with any bank or card network.</Text>
           </View>
+
+          {editing ? (
+            <View style={styles.danger}>
+              <Button variant="link" label="Archive debt" onPress={archive} />
+              <Button variant="link" label="Delete debt" color={colors.danger} onPress={remove} />
+            </View>
+          ) : null}
         </ScrollView>
         <View style={styles.footer}>
-          <Button label="Save debt" onPress={save} disabled={!currency} />
+          <Button label={editing ? 'Save changes' : 'Save debt'} onPress={save} disabled={!currency} />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -247,5 +324,6 @@ const styles = StyleSheet.create({
   hint: { ...type.small, color: colors.muted },
   safe: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
   safeText: { ...type.small, color: colors.inkSoft, flex: 1 },
+  danger: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm, alignItems: 'flex-start' },
   footer: { paddingHorizontal: space.screenOnboarding, paddingTop: space.md, paddingBottom: space.xxl },
 });

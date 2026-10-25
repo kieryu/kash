@@ -19,11 +19,13 @@ type Props = {
   /** 0–1 paid off; mini only. */
   progress?: number;
   onPress?: () => void;
+  /** Overrides the spoken label (default: nickname, issuer, balance). */
+  accessibilityLabel?: string;
 };
 
-export function DebtCard({ variant, color, nickname, balanceText, issuer, kindLabel, network, progress = 0, onPress }: Props) {
+export function DebtCard({ variant, color, nickname, balanceText, issuer, kindLabel, network, progress = 0, onPress, accessibilityLabel }: Props) {
   const paid = variant === 'mini' ? `${Math.round(Math.min(1, Math.max(0, progress)) * 100)}% paid off` : null;
-  const label = [nickname, issuer, balanceText, paid].filter(Boolean).join(', ');
+  const label = accessibilityLabel ?? [nickname, issuer, balanceText, paid].filter(Boolean).join(', ');
   const body =
     variant === 'mini' ? (
       <>

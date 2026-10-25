@@ -226,3 +226,42 @@ export function debtFreeDate(rows: DebtRow[], plan: Extract<PlanResult, { status
   const dates = rows.filter((r) => plan.perDebt[r.id]).map((r) => payoffDate(plan.perDebt[r.id].payoff, r.dueDay));
   return dates.sort().at(-1) ?? payoffDate(plan.debtFree, null);
 }
+
+// --- Debts tab ---
+
+export type DebtsListItem = { debt: DebtRow; balance: Minor; isFocus: boolean; payoffText: string };
+
+/**
+ * Debts tab: active debts in plan order (focus first, then by projected payoff), paid-off ones apart,
+ * total left and this month's minimums.
+ */
+export function debtsList(s: Snapshot, today: string) {
+  const bal = balancesOf(s.txs);
+  const plan = monthPlan(s);
+  const result = projection(s);
+  const payoff = (id: string) => (result.status === 'ok' ? result.perDebt[id]?.payoff : undefined);
+  const open = s.rows.filter((r) => (bal.get(r.id) ?? 0) > 0);
+  const rank = (r: DebtRow) => (r.id === plan.focusId ? '' : (payoff(r.id) ?? '9999-99'));
+  const active: DebtsListItem[] = [...open]
+    .sort((a, b) => rank(a).localeCompare(rank(b)) || a.sortOrder - b.sortOrder)
+    .map((debt) => {
+      const month = payoff(debt.id);
+      let payoffText = 'No payoff date at this budget yet';
+      if (month) {
+        const c = countdown(today, payoffDate(month, debt.dueDay));
+        payoffText = !c.inDays ? `Paid off around ${c.big}` : c.big === 'This month' ? 'Paid off this month' : `Paid off in ${c.big}`;
+      }
+      return { debt, balance: bal.get(debt.id)!, isFocus: debt.id === plan.focusId, payoffText };
+    });
+  return {
+    active,
+    paidOff: s.rows.filter((r) => !open.includes(r)),
+    totalLeft: active.reduce((sum, i) => sum + i.balance, 0),
+    minimums: plan.lines.reduce((sum, l) => sum + l.minimumDue, 0),
+  };
+}
+
+/** "Paid off Oct 2026". */
+export function paidOffText(r: DebtRow): string {
+  return r.paidOffOn ? `Paid off ${formatYearMonth(r.paidOffOn.slice(0, 7), undefined, 'short')}` : 'Paid off';
+}

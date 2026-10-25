@@ -55,3 +55,8 @@ export function updateDebt(db: Db, id: string, patch: DebtPatch): void {
     .where(eq(debts.id, id))
     .run();
 }
+
+/** Deletes the debt; its transactions and check-ins go with it (ON DELETE CASCADE). */
+export function deleteDebt(db: Db, id: string): void {
+  db.delete(debts).where(eq(debts.id, id)).run();
+}

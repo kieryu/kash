@@ -25,9 +25,11 @@ type SegmentedProps<T extends string> = {
   value: T;
   onChange: (value: T) => void;
   accessibilityLabel: string;
+  /** Locked: shows the value, ignores taps. */
+  disabled?: boolean;
 };
 
-export function SegmentedControl<T extends string>({ options, value, onChange, accessibilityLabel }: SegmentedProps<T>) {
+export function SegmentedControl<T extends string>({ options, value, onChange, accessibilityLabel, disabled }: SegmentedProps<T>) {
   return (
     <View style={styles.segments} accessibilityRole="tablist" accessibilityLabel={accessibilityLabel}>
       {options.map((o) => {
@@ -36,11 +38,12 @@ export function SegmentedControl<T extends string>({ options, value, onChange, a
           <Pressable
             key={o.value}
             accessibilityRole="tab"
-            accessibilityState={{ selected: on }}
+            accessibilityState={{ selected: on, disabled }}
+            disabled={disabled}
             onPress={() => onChange(o.value)}
             // 30px visually, 44px to touch (DESIGN.md §1).
             hitSlop={{ top: 7, bottom: 7 }}
-            style={[styles.segment, on && styles.segmentOn]}
+            style={[styles.segment, on && styles.segmentOn, disabled && !on && styles.segmentLocked]}
           >
             <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.segmentText, on && styles.segmentTextOn]}>
               {o.label}
@@ -101,6 +104,7 @@ const styles = StyleSheet.create({
   segments: { flexDirection: 'row', gap: 3, padding: 3, borderRadius: 11, backgroundColor: colors.segmentBg },
   segment: { flex: 1, minHeight: size.segment, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   segmentOn: { backgroundColor: colors.primary },
+  segmentLocked: { opacity: 0.5 },
   segmentText: { ...type.segment, color: colors.ink },
   segmentTextOn: { ...type.label, color: colors.onPrimary },
 

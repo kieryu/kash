@@ -1,11 +1,13 @@
-import type { NewDebt } from '@/db/repositories/debts';
-import type { DebtRow } from '@/db/schema';
+import { updateDebt, type DebtPatch, type NewDebt } from '@/db/repositories/debts';
+import { addTransaction } from '@/db/repositories/transactions';
+import type { Db, DebtRow } from '@/db/schema';
 import templates from '@/data/cardTemplates.json';
 import type { Currency, Minor } from '@/engine/types';
 
 import { looksLikeCardNumber } from './cardNumber';
 import { installmentBalance } from './engineDebts';
-import { parseMoney, parsePercent } from './format';
+import { formatPercent, parseMoney, parsePercent } from './format';
+import { amountInputText, syncPaidOff } from './payments';
 
 // Add-a-debt form (screen 06): the segment picks the fields, templates and stored kind.
 
@@ -140,4 +142,70 @@ function parseMinimum(text: string, currency: Currency) {
   }
   const amount = parseMoney(text, currency);
   return amount ? ({ minRule: 'fixed', minFixedMinor: amount } as const) : null;
+}
+
+// --- Edit a debt (09 → Edit) ---
+
+export function segmentOf(row: DebtRow): Segment {
+  if (row.amortizationMinor != null) return row.kind === 'personal_loan' || row.kind === 'government_loan' ? 'loan' : 'installment';
+  return row.kind === 'credit_card' ? 'card' : 'other';
+}
+
+/** The form prefilled from a stored debt. Payments left = balance ÷ payment, rounded up. */
+export function formValuesOf(row: DebtRow, balance: Minor): DebtFormValues {
+  const money = (n: number | null) => (n ? amountInputText(n, row.currency) : '');
+  const minimum = row.minRule === 'fixed' ? money(row.minFixedMinor) : row.minPercent ? formatPercent(row.minPercent) : '';
+  return {
+    segment: segmentOf(row),
+    templateId: row.templateId ?? CUSTOM_TEMPLATE.id,
+    color: row.color,
+    nickname: row.nickname,
+    balance: amountInputText(Math.max(0, balance), row.currency),
+    rate: formatPercent(row.monthlyRate),
+    minimum,
+    payment: money(row.amortizationMinor),
+    monthsLeft: row.amortizationMinor ? String(Math.ceil(Math.max(0, balance) / row.amortizationMinor)) : '',
+    dueDay: row.dueDay ? String(row.dueDay) : '',
+  };
+}
+
+export type DebtEdit = { patch: DebtPatch; correction: Minor };
+
+/**
+ * Same rules as the add form. The balance itself isn't edited here (check-in or payment does that).
+ * Installments: balance = payment × payments left, so changing either appends a correction row (D18).
+ * Untouched fields stay as stored (e.g. a "% or ₱X" minimum the form can't show).
+ */
+export function parseDebtEdit(
+  v: DebtFormValues,
+  orig: DebtFormValues,
+  balance: Minor,
+  currency: Currency,
+): { ok: true; edit: DebtEdit } | { ok: false; errors: Partial<Record<DebtFormField, string>> } {
+  const monthsChanged = v.monthsLeft !== orig.monthsLeft;
+  // Balance isn't on the edit form; unchanged months may be 0 (paid off), which the add form refuses.
+  const r = parseDebtForm({ ...v, segment: orig.segment, balance: '1', monthsLeft: monthsChanged ? v.monthsLeft : '1' }, currency);
+  if (!r.ok) return r;
+  const d = r.debt;
+  const patch: DebtPatch = { nickname: d.nickname, kind: d.kind, issuer: d.issuer, templateId: d.templateId, color: d.color, dueDay: d.dueDay };
+  let correction = 0;
+  if (isInstallment(orig.segment)) {
+    const paymentChanged = v.payment !== orig.payment;
+    if (paymentChanged) patch.amortizationMinor = d.amortizationMinor;
+    if (paymentChanged || monthsChanged) correction = installmentBalance(d.amortizationMinor!, Number(v.monthsLeft.trim())) - Math.max(0, balance);
+  } else {
+    patch.monthlyRate = d.monthlyRate;
+    if (v.minimum !== orig.minimum) Object.assign(patch, { minRule: d.minRule, minPercent: d.minPercent ?? null, minFixedMinor: d.minFixedMinor ?? null });
+  }
+  return { ok: true, edit: { patch, correction } };
+}
+
+/** Saves an edit in one transaction. Returns true when the paid-off state changed (caller reschedules reminders). */
+export function saveDebtEdit(db: Db, id: string, edit: DebtEdit, on: string): boolean {
+  return db.transaction((tx) => {
+    updateDebt(tx, id, edit.patch);
+    if (!edit.correction) return false;
+    addTransaction(tx, { debtId: id, type: 'correction', amountMinor: edit.correction, occurredOn: on, note: 'Edited payment terms' });
+    return syncPaidOff(tx, id, on);
+  });
 }
