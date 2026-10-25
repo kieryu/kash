@@ -171,5 +171,11 @@ It opens only from a user tap on something Pro, so no weekly "last shown" counte
 - Delete removes the debt and, by ON DELETE CASCADE, its transactions and check-ins (explicit user action, strong confirm). Archive keeps history.
 - Archive and delete land on Home; reminders rescheduled.
 
+### D35. Plan tab and paid-off moment (2026-10-26, approved proposals)
+- Plan tab: summary card, payoff order (same list as the Debts tab), month-by-month table (first 12, then "Show all"); each month links to "How was this calculated?" for that month (future months use the dashboard projection). Debts already at zero are skipped in future months. No charts (v1.1).
+- Paid-off moment shows once per debt, derived from history (`firstPayoff()` — the first time the balance reached zero), no stored flag; undo + pay again doesn't repeat it. Opens only after a save (payment, check-in, edit).
+- "Keep this card in my wallet" opens the Debts tab (paid-off cards already live there); not a setting. "Keep going" is amber.
+- One success haptic via `expo-haptics` (no network, adds Android VIBRATE; new dev build). No confetti or mascot animation (v1.1).
+
 ## Costs
 No paid services so far. See brief §19.
