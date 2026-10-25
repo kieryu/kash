@@ -1,9 +1,10 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { AccessibilityInfo, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 import Svg, { Circle, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 import { APP_NAME } from '@/config/app';
+import { STRATEGY_NAMES, type StrategyKey } from '@/domain/compare';
 import { getAppDb } from '@/db/client';
 import { getSettings, updateSettings } from '@/db/repositories/settings';
 import type { Settings } from '@/db/schema';
@@ -25,15 +26,34 @@ const CARDS: { id: Id; name: string; how: string; best: string; pro?: boolean }[
 
 const PAGE = theme.size.strategyCardWidth + 14;
 
-// 04 Choose a strategy. "Help me choose" quiz is not designed yet (design/proposals/quiz.md).
+// 04 Choose a strategy. "Help me choose" opens the 04a quiz, which comes back with `recommended`.
 export default function Strategy() {
+  const { recommended } = useLocalSearchParams<{ recommended?: StrategyKey }>();
   const [picked, setPicked] = useState<Id>('snowball');
   const [page, setPage] = useState(0);
+  const carousel = useRef<ScrollViewInstance>(null);
+  // Quiz result: select it as soon as it arrives (state adjusted during render, not in an effect).
+  const [seen, setSeen] = useState(recommended);
+  if (recommended !== seen) {
+    setSeen(recommended);
+    if (recommended && STRATEGY_NAMES[recommended]) setPicked(recommended);
+  }
   const card = CARDS.find((c) => c.id === picked)!;
 
   useEffect(() => {
-    getAppDb().then((db) => setPicked(getSettings(db).strategy));
+    getAppDb().then((db) => {
+      if (!recommended) setPicked(getSettings(db).strategy);
+    });
+    // Only on first load; a quiz result arrives later through `recommended`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const i = CARDS.findIndex((c) => c.id === recommended);
+    if (!recommended || i < 0) return;
+    carousel.current?.scrollTo({ x: i * PAGE, animated: true });
+    AccessibilityInfo.announceForAccessibility(`Recommended: ${STRATEGY_NAMES[recommended]}`);
+  }, [recommended]);
 
   const use = async () => {
     if (card.pro) return;
@@ -60,6 +80,7 @@ export default function Strategy() {
       }
     >
       <ScrollView
+        ref={carousel}
         horizontal
         showsHorizontalScrollIndicator={false}
         snapToInterval={PAGE}
@@ -69,10 +90,23 @@ export default function Strategy() {
         scrollEventThrottle={64}
       >
         {CARDS.map((c) => (
-          <StrategyCard key={c.id} name={c.name} how={c.how} best={c.best} pro={c.pro} selected={c.id === picked} art={<Art id={c.id} />} onPress={() => setPicked(c.id)} />
+          <StrategyCard
+            key={c.id}
+            name={c.name}
+            how={c.how}
+            best={c.best}
+            pro={c.pro}
+            selected={c.id === picked}
+            recommended={c.id === recommended}
+            art={<Art id={c.id} />}
+            onPress={() => setPicked(c.id)}
+          />
         ))}
       </ScrollView>
       <PageDots count={CARDS.length} index={page} />
+      <View style={styles.help}>
+        <Button variant="link" label="Not sure? Help me choose" onPress={() => router.push('/quiz')} />
+      </View>
     </OnboardingScreen>
   );
 }
@@ -132,5 +166,6 @@ const { colors, space, type } = theme;
 
 const styles = StyleSheet.create({
   carousel: { gap: 14, paddingHorizontal: space.screenOnboarding, paddingVertical: space.xs },
+  help: { paddingHorizontal: space.screenOnboarding, alignItems: 'flex-start' },
   note: { ...type.small, color: colors.muted, textAlign: 'center' },
 });

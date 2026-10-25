@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { theme } from '@/theme';
+
+import { IconButton } from './Button';
+import { BackIcon, CheckBadge } from './icons';
 
 const STEPS = 5;
 
@@ -28,16 +31,25 @@ type Props = {
   footer: ReactNode;
   /** Strategy carousel runs edge to edge. */
   fullBleed?: boolean;
+  /** Back arrow left of the step bar (04a quiz). */
+  onBack?: () => void;
 };
 
 /** Shared onboarding layout: step bar, H1 + body, content, pinned footer. */
-export function OnboardingScreen({ step, art, title, body, children, footer, fullBleed }: Props) {
+export function OnboardingScreen({ step, art, title, body, children, footer, fullBleed, onBack }: Props) {
   const pad = fullBleed ? styles.padded : null;
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={[styles.content, !fullBleed && styles.padded]} showsVerticalScrollIndicator={false}>
-        <View style={pad}>
-          <StepBar step={step} />
+        <View style={[pad, onBack && styles.backRow]}>
+          {onBack ? (
+            <IconButton accessibilityLabel="Back" onPress={onBack}>
+              <BackIcon size={24} color={colors.ink} />
+            </IconButton>
+          ) : null}
+          <View style={styles.fill}>
+            <StepBar step={step} />
+          </View>
         </View>
         {art ? <View style={styles.art}>{art}</View> : null}
         <View style={[styles.head, pad]}>
@@ -50,6 +62,27 @@ export function OnboardingScreen({ step, art, title, body, children, footer, ful
       </ScrollView>
       <View style={styles.footer}>{footer}</View>
     </SafeAreaView>
+  );
+}
+
+type AnswerProps = { title: string; caption?: string; selected: boolean; onPress: () => void };
+
+/** Full-width answer card for the quiz. Put inside a View with accessibilityRole="radiogroup". */
+export function AnswerCard({ title, caption, selected, onPress }: AnswerProps) {
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ checked: selected }}
+      accessibilityLabel={caption ? `${title}. ${caption}` : title}
+      onPress={onPress}
+      style={({ pressed }) => [styles.answer, selected && styles.answerOn, pressed && styles.pressed]}
+    >
+      <View style={styles.answerText}>
+        <Text style={styles.answerTitle}>{title}</Text>
+        {caption ? <Text style={styles.answerCaption}>{caption}</Text> : null}
+      </View>
+      {selected ? <CheckBadge size={26} color={colors.primary} checkColor={colors.onPrimary} /> : null}
+    </Pressable>
   );
 }
 
@@ -67,4 +100,22 @@ const styles = StyleSheet.create({
   steps: { flexDirection: 'row', gap: 6 },
   step: { flex: 1, height: 4, borderRadius: radius.pill, backgroundColor: colors.handle },
   stepOn: { backgroundColor: colors.primary },
+  backRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  fill: { flex: 1 },
+  answer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
+    borderWidth: 1.5,
+    borderColor: colors.lineStrong,
+    padding: space.lg,
+  },
+  // 3px border; padding shrinks so the card doesn't jump.
+  answerOn: { borderWidth: 3, borderColor: colors.primary, padding: space.lg - 1.5 },
+  answerText: { flex: 1, gap: 2 },
+  answerTitle: { ...type.rowTitle, color: colors.ink },
+  answerCaption: { ...type.small, color: colors.muted },
+  pressed: { opacity: 0.85 },
 });

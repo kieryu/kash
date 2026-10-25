@@ -13,19 +13,27 @@ type Props = {
   art: ReactNode;
   pro?: boolean;
   selected: boolean;
+  /** Picked by the "Help me choose" quiz. */
+  recommended?: boolean;
   onPress: () => void;
 };
 
-export function StrategyCard({ name, how, best, art, pro, selected, onPress }: Props) {
+export function StrategyCard({ name, how, best, art, pro, selected, recommended, onPress }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected }}
-      accessibilityLabel={`${name}${pro ? ', Pro' : ''}. ${how} ${best}`}
+      accessibilityLabel={`${recommended ? 'Recommended for you. ' : ''}${name}${pro ? ', Pro' : ''}. ${how} ${best}`}
       onPress={onPress}
       style={[styles.card, selected && styles.selected]}
     >
       <View style={[styles.art, pro && styles.artPro]}>{art}</View>
+      {recommended ? (
+        <View style={styles.rec}>
+          <Text style={styles.recChip}>Recommended for you</Text>
+          <Text style={styles.recNote}>You can switch anytime.</Text>
+        </View>
+      ) : null}
       <View style={styles.head}>
         <Text style={styles.name}>{name}</Text>
         {pro && <Text style={styles.pro}>PRO</Text>}
@@ -74,6 +82,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     overflow: 'hidden',
   },
+  rec: { gap: space.xs, alignItems: 'flex-start' },
+  recChip: {
+    ...type.captionBold,
+    color: colors.primary,
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    paddingVertical: space.xs,
+    paddingHorizontal: 10,
+    overflow: 'hidden',
+  },
+  recNote: { ...type.caption, color: colors.muted },
   how: { ...type.body, color: colors.inkSoft },
   best: { ...type.label, color: colors.primary },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
