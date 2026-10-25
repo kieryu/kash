@@ -164,5 +164,12 @@ It opens only from a user tap on something Pro, so no weekly "last shown" counte
 - Privacy policy hosted as a static page (GitHub Pages) from `docs/privacy-policy.md`.
 - **Open (not adopted):** strip Android `INTERNET` permission from preview/production so the OS enforces zero network. Needs a device check that Play Billing still works (it talks to the Play Store app).
 
+### D34. Debts tab and edit/archive/delete (2026-10-26, approved proposals)
+- Installment edit shows Monthly payment and Payments left; changing either appends a `correction` row for the new balance (payment × months). History is never edited (D18).
+- Edit leaves untouched fields as stored; never changes `acceptsExtra`, `autoDeducted`, interest method, statement day or currency.
+- Read-only debts (D28): Edit opens the paywall, so they can't be archived or deleted on the free plan. Restore at the free limit opens the paywall.
+- Delete removes the debt and, by ON DELETE CASCADE, its transactions and check-ins (explicit user action, strong confirm). Archive keeps history.
+- Archive and delete land on Home; reminders rescheduled.
+
 ## Costs
 No paid services so far. See brief §19.
