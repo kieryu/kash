@@ -15,6 +15,7 @@ const NO_INTERNET = process.env.KASH_NO_INTERNET === '1';
 const config: ExpoConfig = {
   name: APP_NAME,
   slug: APP_SLUG,
+  owner: 'kieryu19',
   scheme: APP_SLUG,
   version: '1.0.0',
   orientation: 'portrait',
@@ -52,6 +53,8 @@ const config: ExpoConfig = {
       },
     ],
   ],
+  // EAS project id (not a secret; identifies the project for builds only).
+  extra: { eas: { projectId: '370baf05-5c4e-4274-955b-8df521b67222' } },
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
