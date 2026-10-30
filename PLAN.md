@@ -23,7 +23,7 @@ Update the slice status table as work lands.
 Each slice ends with `npm run check` passing (typecheck + lint + tests) and a short summary.
 Screens marked * are **not designed** — propose a layout in the DESIGN.md style and get approval before building.
 
-**All MVP slices are built in code.** What's left needs the user: on-device checks (one dev build covers all), `eas login`/`init` + preview build, final name/package (D16), Play account; open decision D33 (INTERNET permission); dark mode (not designed).
+**All MVP slices are built in code.** What's left needs the user: on-device checks (one dev build covers all, `docs/device-checks.md`), `eas login`/`init` + preview build, final name/package (D16), Play account; D33 for production only (preview already drops INTERNET, D38); dark mode (not designed).
 
 ## Parallel work (2 agents)
 
