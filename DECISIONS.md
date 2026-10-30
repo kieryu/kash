@@ -162,7 +162,7 @@ It opens only from a user tap on something Pro, so no weekly "last shown" counte
 - Large fonts: everything grows with the system font except PinPad digits (capped at 1.5×, fixed 72px keys) and debt-type segment labels (shrink to fit).
 - Reduce motion: the payment sheet doesn't animate; native screen transitions follow the OS setting.
 - Privacy policy hosted as a static page (GitHub Pages) from `docs/privacy-policy.md`.
-- **Open (not adopted):** strip Android `INTERNET` permission from preview/production so the OS enforces zero network. Needs a device check that Play Billing still works (it talks to the Play Store app).
+- Strip Android `INTERNET`: done for preview builds (D38). Production still open: needs a device check that Play Billing works without it (it talks to the Play Store app), so decide when billing is added.
 
 ### D34. Debts tab and edit/archive/delete (2026-10-26, approved proposals)
 - Installment edit shows Monthly payment and Payments left; changing either appends a `correction` row for the new balance (payment × months). History is never edited (D18).
@@ -187,6 +187,10 @@ It opens only from a user tap on something Pro, so no weekly "last shown" counte
 Included: unlimited debts (the only built Pro feature; My own order is free, D3). Everything else from §20 sits under "Coming in free updates for Pro" in a dashed card. Price stays ₱99.
 **Why:** listing unbuilt features as part of the purchase is a dark pattern and a Play review risk. When a v1.1 feature ships, move it from `COMING` to `FEATURES` in `src/app/pro.tsx`.
 **Trade-off:** buyers now pay partly for a promise. If v1.1 slips far, revisit the price or drop items from the list.
+
+### D38. Preview builds have no INTERNET permission (2026-10-30)
+`eas.json` preview sets `KASH_NO_INTERNET=1`; `app.config.ts` then adds `android.blockedPermissions: ['android.permission.INTERNET']`. Dev builds keep it (Metro). Production keeps it until billing is in and tested without it (D33). Guarded by `networkGuard.test.ts`.
+**Why:** testers get OS-enforced offline; any library that tries to phone home fails visibly instead of silently. Reversible: remove the env var.
 
 ## Costs
 No paid services so far. See brief §19.

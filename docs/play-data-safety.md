@@ -35,5 +35,5 @@ Result shown on the store listing: **"No data collected"** and **"No data shared
 
 ## Permissions to expect in the manifest
 
-Explain if Play asks: notifications (`POST_NOTIFICATIONS`, reminders), exact alarms if added by expo-notifications (scheduled reminders), biometric (`USE_BIOMETRIC`), vibrate. `INTERNET` comes from React Native's template; the app makes no network calls (see the audit). Billing adds `com.android.vending.BILLING` at launch.
+Explain if Play asks: notifications (`POST_NOTIFICATIONS`, reminders), exact alarms if added by expo-notifications (scheduled reminders), biometric (`USE_BIOMETRIC`), vibrate. `INTERNET` comes from React Native's template; the app makes no network calls (see the audit). Preview builds remove it (D38); production keeps it for now (Play Billing, D33). Billing adds `com.android.vending.BILLING` at launch.
 Check the final list with `aapt dump permissions <apk>` on the preview build.

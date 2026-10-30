@@ -36,11 +36,12 @@ eas build --profile preview --platform android
 New builds: send the new link; it installs over the old one (same keystore), data stays.
 
 ## 3. On-device checks to do on the first preview build
+Feature walkthrough on a dev build first: `docs/device-checks.md`.
 - Everything in `docs/network-audit.md` → "Still needs an on-device network capture".
 - Accessibility: TalkBack through onboarding, dashboard, payment sheet, settings; phone font size and display size at max; "Remove animations" on.
 - SQLCipher: Settings → (dev builds only) Encrypted database check; on preview, confirm the app opens and data survives a restart.
 - Reminders fire at 9:00 and tapping a statement reminder opens check-in.
-- Permissions list: `aapt dump permissions <apk>` matches `docs/play-data-safety.md`.
+- Permissions list: `aapt dump permissions <apk>` matches `docs/play-data-safety.md`. Preview has **no** `INTERNET` (D38).
 
 ## 4. Google Play: internal → closed → production
 

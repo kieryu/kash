@@ -46,3 +46,19 @@ test('app config has no OTA updates, Firebase config or network plugins', () => 
   // D15: no OS cloud backup of app data.
   expect(config.android?.allowBackup).toBe(false);
 });
+
+test('preview builds drop the INTERNET permission (D38)', () => {
+  const eas = require('../../../eas.json') as { build: Record<string, { env?: Record<string, string> }> };
+  expect(eas.build.preview.env?.KASH_NO_INTERNET).toBe('1');
+  expect(eas.build.development.env?.KASH_NO_INTERNET).toBeUndefined(); // dev client needs Metro
+  process.env.KASH_NO_INTERNET = '1';
+  try {
+    jest.isolateModules(() => {
+      const preview = (require('../../../app.config') as { default: typeof config }).default;
+      expect(preview.android?.blockedPermissions).toEqual(['android.permission.INTERNET']);
+    });
+  } finally {
+    delete process.env.KASH_NO_INTERNET;
+  }
+  expect(config.android?.blockedPermissions).toBeUndefined();
+});
