@@ -15,13 +15,15 @@ Update the slice status table as work lands.
 | 5 | Onboarding | **Done** except on-device check. Quiz built from approved proposal |
 | 6 | Dashboard & payments | **Done** except on-device check, incl. Debts tab and edit/archive/delete (approved proposals) |
 | 7 | Check-in, compare, Plan tab | **Done** except on-device check: 10 Check-in, 11 Compare, How was this calculated, reminder deep link + permission + channel. Plan tab and paid-off moment built from approved proposals (new dev build: expo-haptics) |
-| 8 | Notifications | Logic **done** (`src/notifications`). Not wired: no caller of `rescheduleReminders`, permission request, Android channel; deep link in slice 7; network check in slice 11. New dev build needed |
-| 9 | Encrypted backup | **Done** except on-device check (new dev build needed: expo-sharing). Entry points not wired: Settings rows (slice 10), restore link on 04 Strategy |
+| 8 | Notifications | **Done** except on-device check: rescheduled on app start + after debt/check-in/settings changes, permission at end of onboarding, Android channel, deep link (D25). New dev build needed |
+| 9 | Encrypted backup | **Done** except on-device check (new dev build needed: expo-sharing). Entry points: Settings rows + restore link on 04 Strategy (D31) |
 | 10 | Settings, currency, Pro | **Done** except on-device check; billing stubbed; paywall copy lists unbuilt features (D32) |
 | 11 | Hardening & release prep | **Done** in code/docs (a11y + font scaling, network audit + guard test, Data safety, privacy policy draft, `docs/release.md`). Preview build not run: needs `eas login`/`init`, final package name (D16), Play account |
 
 Each slice ends with `npm run check` passing (typecheck + lint + tests) and a short summary.
 Screens marked * are **not designed** — propose a layout in the DESIGN.md style and get approval before building.
+
+**All MVP slices are built in code.** What's left needs the user: on-device checks (one dev build covers all), `eas login`/`init` + preview build, final name/package (D16), Play account; open decisions D32 (paywall copy) and D33 (INTERNET permission); dark mode (not designed).
 
 ## Parallel work (2 agents)
 
