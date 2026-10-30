@@ -68,6 +68,13 @@ it('paywall: billing isn’t live yet, so Unlock says so and nothing changes', a
   expect(router.back).toHaveBeenCalled();
 });
 
+it('paywall: unbuilt features are listed as coming, not included (D32)', async () => {
+  await render(<Pro />);
+  expect(await screen.findByText('Unlimited debts (free: 3)')).toBeTruthy();
+  expect(screen.getByRole('header', { name: 'Coming in free updates for Pro' })).toBeTruthy();
+  expect(screen.getByText(/What-if simulator/)).toBeTruthy();
+});
+
 it('reminder days: saves and reschedules', async () => {
   await render(<Settings />);
   await fireEvent.press(await screen.findByRole('button', { name: 'Due-date reminders, 3 days before' }));

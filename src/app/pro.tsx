@@ -12,8 +12,9 @@ import { Button, IconButton } from '@/ui/Button';
 import { CheckBadge, CloseIcon } from '@/ui/icons';
 import { Mascot } from '@/ui/Mascot';
 
-const FEATURES = [
-  'Unlimited debts (free: 3)',
+// Only list what works today as "included"; the rest is labelled as coming so we never sell an unbuilt feature (D32).
+const FEATURES = ['Unlimited debts (free: 3)'];
+const COMING = [
   'Highest-cost and Hybrid strategies',
   'What-if simulator',
   'Charts and full timeline',
@@ -82,6 +83,17 @@ export default function Pro() {
           ))}
         </View>
 
+        <View style={styles.comingCard}>
+          <Text accessibilityRole="header" style={styles.comingTitle}>
+            Coming in free updates for Pro
+          </Text>
+          {COMING.map((f) => (
+            <Text key={f} style={styles.comingText}>
+              {'•'} {f}
+            </Text>
+          ))}
+        </View>
+
         <View style={styles.free}>
           <Text style={styles.freeText}>
             <Text style={styles.freeStrong}>Always free:</Text> your full payoff plan, reminders, encryption and backups. Your
@@ -127,6 +139,9 @@ const styles = StyleSheet.create({
   feature: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 46 },
   featureLine: { borderBottomWidth: 1, borderBottomColor: colors.divider },
   featureText: { ...type.body, color: colors.ink, flexShrink: 1 },
+  comingCard: { borderRadius: radius.cardLg - 2, borderWidth: 1.5, borderColor: colors.lineStrong, borderStyle: 'dashed', paddingVertical: 14, paddingHorizontal: space.lg, gap: 6 },
+  comingTitle: { ...type.rowTitleSm, color: colors.muted },
+  comingText: { ...type.bodySm, color: colors.muted },
   free: { backgroundColor: colors.primarySoft, borderRadius: radius.card, paddingVertical: 14, paddingHorizontal: space.lg },
   freeText: { ...type.bodySm, color: colors.onPrimarySoft },
   freeStrong: { ...type.rowTitleSm, color: colors.onPrimarySoft },

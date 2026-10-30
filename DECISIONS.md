@@ -155,7 +155,7 @@ DB file → DB key → reminders → lock record. If the DB file can't be delete
 
 ### D32. Paywall only on tap
 It opens only from a user tap on something Pro, so no weekly "last shown" counter is stored. Billing is a stub (`src/billing/billing.ts`) until expo-iap at launch.
-**Open:** paywall copy lists Pro features not built yet — fix copy or ship them before billing goes live.
+**Resolved in D37.**
 
 ### D33. Hardening (2026-10-25, slice 11)
 - `npm run check` includes a network guard test (`src/config/__tests__/networkGuard.test.ts`): fails on analytics/crash/OTA/backend SDKs, an `updates` block, a Firebase config file, or `allowBackup` ≠ false. Re-run `docs/network-audit.md` when adding a dependency.
@@ -182,6 +182,11 @@ It opens only from a user tap on something Pro, so no weekly "last shown" counte
 - The recommendation only preselects a card on 04 (with a "Recommended for you" chip); nothing is saved until "Use X". Q1 answer kept when going back from Q2.
 - Mascot lines in the quiz are our own copy (proposal had none).
 - Scrypt-heavy test files get a longer Jest timeout (busy-machine flakes); app code unchanged.
+
+### D37. Paywall lists only built features as included (2026-10-30)
+Included: unlimited debts (the only built Pro feature; My own order is free, D3). Everything else from §20 sits under "Coming in free updates for Pro" in a dashed card. Price stays ₱99.
+**Why:** listing unbuilt features as part of the purchase is a dark pattern and a Play review risk. When a v1.1 feature ships, move it from `COMING` to `FEATURES` in `src/app/pro.tsx`.
+**Trade-off:** buyers now pay partly for a promise. If v1.1 slips far, revisit the price or drop items from the list.
 
 ## Costs
 No paid services so far. See brief §19.
