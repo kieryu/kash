@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { theme } from '@/theme';
@@ -15,6 +15,8 @@ type Props = {
   title: string;
   subtitle?: string;
   message?: string | null;
+  /** Shown with a spinner while onComplete runs (hashing a PIN takes a few seconds). */
+  busyText?: string;
   disabled?: boolean;
   /** Called with the full PIN; the dots clear once it resolves. */
   onComplete: (pin: string) => Promise<void> | void;
@@ -23,7 +25,7 @@ type Props = {
   onForgot?: () => void;
 };
 
-export function PinPad({ tone, title, subtitle, message, disabled, onComplete, onBack, onBiometrics, onForgot }: Props) {
+export function PinPad({ tone, title, subtitle, message, busyText, disabled, onComplete, onBack, onBiometrics, onForgot }: Props) {
   const [pin, setPin] = useState('');
   const [busy, setBusy] = useState(false);
   const c = tone === 'primary' ? toneColors.primary : toneColors.light;
@@ -76,9 +78,16 @@ export function PinPad({ tone, title, subtitle, message, disabled, onComplete, o
             <View key={i} style={[styles.dot, { borderColor: c.text }, i < pin.length && { backgroundColor: c.text }]} />
           ))}
         </View>
-        <Text style={[styles.message, { color: c.muted }]} accessibilityLiveRegion="polite">
-          {message ?? ' '}
-        </Text>
+        {busy && busyText ? (
+          <View style={styles.busy} accessibilityLiveRegion="polite">
+            <ActivityIndicator color={c.text} />
+            <Text style={[styles.busyText, { color: c.muted }]}>{busyText}</Text>
+          </View>
+        ) : (
+          <Text style={[styles.message, { color: c.muted }]} accessibilityLiveRegion="polite">
+            {message ?? ' '}
+          </Text>
+        )}
       </View>
 
       <View style={styles.pad}>
@@ -140,6 +149,8 @@ const styles = StyleSheet.create({
   dots: { flexDirection: 'row', gap: space.xl, paddingVertical: space.lg },
   dot: { width: size.pinDot, height: size.pinDot, borderRadius: size.pinDot / 2, borderWidth: size.border },
   message: { ...type.bodySm, textAlign: 'center', minHeight: 40 },
+  busy: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm, minHeight: 40 },
+  busyText: type.bodySm,
   pad: { gap: space.lg, paddingBottom: space.lg },
   row: { flexDirection: 'row', justifyContent: 'space-evenly' },
   key: { width: size.pinKey, height: size.pinKey, borderRadius: size.pinKey / 2, alignItems: 'center', justifyContent: 'center' },

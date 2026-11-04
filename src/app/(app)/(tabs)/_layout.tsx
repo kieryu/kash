@@ -1,14 +1,20 @@
 import type { ReactNode } from 'react';
 import { Tabs } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
 
 import { theme } from '@/theme';
 import { CardIcon, HomeIcon, PlanIcon, SettingsIcon } from '@/ui/icons';
 
-const { colors, type } = theme;
+const { colors, radius, type } = theme;
 
+// Active tab: icon sits in a soft green pill.
 function icon(Icon: (p: { size: number; color: string }) => ReactNode) {
   return function TabIcon({ focused }: { focused: boolean }) {
-    return <Icon size={24} color={focused ? colors.primary : colors.muted} />;
+    return (
+      <View style={[styles.pill, focused && styles.pillOn]}>
+        <Icon size={22} color={focused ? colors.primary : colors.muted} />
+      </View>
+    );
   };
 }
 
@@ -20,7 +26,7 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.line },
-        tabBarLabelStyle: type.captionBold,
+        tabBarLabelStyle: { ...type.captionBold, marginTop: 2 },
         sceneStyle: { backgroundColor: colors.bg },
       }}
     >
@@ -32,3 +38,8 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  pill: { width: 52, height: 28, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  pillOn: { backgroundColor: colors.primarySoft },
+});

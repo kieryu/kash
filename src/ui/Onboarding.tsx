@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,13 +32,14 @@ type Props = {
   footer: ReactNode;
   /** Strategy carousel runs edge to edge. */
   fullBleed?: boolean;
-  /** Back arrow left of the step bar (04a quiz). */
+  /** Back arrow left of the step bar. Default: go back a screen, when there is one. */
   onBack?: () => void;
 };
 
 /** Shared onboarding layout: step bar, H1 + body, content, pinned footer. */
-export function OnboardingScreen({ step, art, title, body, children, footer, fullBleed, onBack }: Props) {
+export function OnboardingScreen({ step, art, title, body, children, footer, fullBleed, onBack: back }: Props) {
   const pad = fullBleed ? styles.padded : null;
+  const onBack = back ?? (router.canGoBack() ? () => router.back() : undefined);
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={[styles.content, !fullBleed && styles.padded]} showsVerticalScrollIndicator={false}>

@@ -62,3 +62,10 @@ test('preview builds drop the INTERNET permission (D38)', () => {
   }
   expect(config.android?.blockedPermissions).toBeUndefined();
 });
+
+test('the free "Pro (test)" switch is only in dev and preview builds', () => {
+  const eas = require('../../../eas.json') as { build: Record<string, { env?: Record<string, string> }> };
+  expect(eas.build.preview.env?.KASH_TESTER_TOOLS).toBe('1');
+  expect(eas.build.production.env?.KASH_TESTER_TOOLS).toBeUndefined();
+  expect(config.extra?.testerTools).toBe(false);
+});

@@ -13,7 +13,7 @@ jest.mock('expo-crypto', () => ({ randomUUID: () => jest.requireActual('node:cry
 const mockDb = testDb();
 const db = mockDb;
 jest.mock('@/db/client', () => ({ getAppDb: () => Promise.resolve(mockDb) }));
-jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({}), router: { back: jest.fn(), push: jest.fn(), replace: jest.fn(), dismissAll: jest.fn() } }));
+jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({}), router: { back: jest.fn(), push: jest.fn(), replace: jest.fn(), dismissAll: jest.fn(), canGoBack: () => true } }));
 
 it('saves a debt, then runs the plan and finishes onboarding', async () => {
   await render(<DebtForm />);
@@ -21,7 +21,7 @@ it('saves a debt, then runs the plan and finishes onboarding', async () => {
   await fireEvent.press(screen.getByRole('button', { name: 'Save debt' }));
   expect(screen.getByText('Enter the balance you owe.')).toBeTruthy();
 
-  await fireEvent.changeText(screen.getByLabelText('Nickname'), 'Everyday Card');
+  await fireEvent.changeText(screen.getByLabelText('Nickname (optional)'), 'Everyday Card');
   await fireEvent.changeText(screen.getByLabelText('Current balance'), '18,450');
   await fireEvent.changeText(screen.getByLabelText('Interest / month'), '3%');
   await fireEvent.changeText(screen.getByLabelText('Minimum payment'), '850');

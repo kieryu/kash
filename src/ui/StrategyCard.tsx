@@ -11,6 +11,8 @@ type Props = {
   best: string;
   /** Strategy illustration, drawn by the screen. */
   art: ReactNode;
+  /** Sample debts in the order this strategy pays them off (R4). */
+  example?: { title: string; detail: string }[];
   pro?: boolean;
   selected: boolean;
   /** Picked by the "Help me choose" quiz. */
@@ -18,7 +20,7 @@ type Props = {
   onPress: () => void;
 };
 
-export function StrategyCard({ name, how, best, art, pro, selected, recommended, onPress }: Props) {
+export function StrategyCard({ name, how, best, art, example, pro, selected, recommended, onPress }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -41,6 +43,21 @@ export function StrategyCard({ name, how, best, art, pro, selected, recommended,
       </View>
       <Text style={styles.how}>{how}</Text>
       <Text style={styles.best}>{best}</Text>
+      {example ? (
+        <View style={styles.example}>
+          <Text style={styles.exampleTitle}>Example: pays off in this order</Text>
+          {example.map((d, i) => (
+            <View key={d.title} style={styles.exampleRow}>
+              <View style={styles.exampleNum}>
+                <Text style={styles.exampleNumText}>{i + 1}</Text>
+              </View>
+              <Text style={styles.exampleText} numberOfLines={2}>
+                <Text style={styles.exampleName}>{d.title}</Text> · {d.detail}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -95,6 +112,13 @@ const styles = StyleSheet.create({
   recNote: { ...type.caption, color: colors.muted },
   how: { ...type.body, color: colors.inkSoft },
   best: { ...type.label, color: colors.primary },
+  example: { gap: 6, borderTopWidth: 1, borderTopColor: colors.divider, paddingTop: space.md },
+  exampleTitle: { ...type.captionBold, color: colors.muted },
+  exampleRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  exampleNum: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft },
+  exampleNumText: { ...type.captionBold, color: colors.primary },
+  exampleText: { ...type.small, color: colors.inkSoft, flex: 1 },
+  exampleName: { ...type.captionBold, color: colors.ink },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.switchOff },
   dotOn: { width: space.xl, backgroundColor: colors.primary },

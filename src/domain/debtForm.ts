@@ -50,6 +50,11 @@ export function templateById(id: string | null): Template | undefined {
 
 export const CUSTOM_TEMPLATE = templates.find((t) => t.id === 'custom')!;
 
+/** Name a debt gets when its nickname is left empty, e.g. "BDO Visa". Custom has none: a name is required. */
+export function templateName(tpl: Template): string | null {
+  return tpl.id === 'custom' ? null : `${tpl.issuer} ${tpl.network ?? tpl.product}`;
+}
+
 /** Templates for a segment, "Custom" last. */
 export function templatesFor(segment: Segment): Template[] {
   return [...templates.filter((t) => t.id !== 'custom' && TEMPLATE_KINDS[segment].includes(t.kind)), CUSTOM_TEMPLATE];
@@ -86,7 +91,8 @@ const HEX = /^#[0-9A-Fa-f]{6}$/;
 export function parseDebtForm(v: DebtFormValues, currency: Currency): DebtFormResult {
   const errors: Partial<Record<DebtFormField, string>> = {};
   const tpl = templateById(v.templateId) ?? CUSTOM_TEMPLATE;
-  const nickname = v.nickname.trim();
+  // R5: optional with a bank template (falls back to its name); required for Custom.
+  const nickname = v.nickname.trim() || (templateName(tpl) ?? '');
 
   if (!nickname) errors.nickname = 'Give it a name you’ll recognise.';
   else if (looksLikeCardNumber(nickname)) errors.nickname = 'This looks like a card number. Kash doesn’t need it — use a nickname instead.';

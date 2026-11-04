@@ -18,6 +18,7 @@ import {
   saveDebtEdit,
   SEGMENTS,
   templateById,
+  templateName,
   templatesFor,
   type DebtFormField,
   type DebtFormValues,
@@ -74,6 +75,9 @@ export default function DebtForm() {
   const set = (patch: Partial<DebtFormValues>) => setV((cur) => ({ ...cur, ...patch }));
   const tpl = templateById(v.templateId) ?? CUSTOM_TEMPLATE;
   const all = templatesFor(v.segment);
+  // R5: a bank template names the debt unless a nickname is given; Custom needs its own name.
+  const defaultName = templateName(tpl);
+  const nameLabel = defaultName ? 'Nickname (optional)' : v.segment === 'card' ? 'Card name' : 'Name';
   const shown = showAll ? all : [...all.slice(0, COLLAPSED - 1), CUSTOM_TEMPLATE].filter((t, i, a) => a.indexOf(t) === i);
   const installment = isInstallment(v.segment);
   const optional = v.segment === 'other';
@@ -179,7 +183,7 @@ export default function DebtForm() {
             color={cardColor}
             issuer={tpl.id === 'custom' ? segmentLabel : tpl.issuer}
             kindLabel={segmentLabel}
-            nickname={v.nickname || 'Nickname'}
+            nickname={v.nickname || defaultName || nameLabel}
             balanceText={currency ? formatMoney(previewMinor ?? 0, currency) : ''}
             network={tpl.network}
           />
@@ -249,7 +253,7 @@ export default function DebtForm() {
             ) : null}
           </View>
 
-          {field('nickname', 'Nickname', 'default', 'e.g. Everyday Card')}
+          {field('nickname', nameLabel, 'default', defaultName ?? 'e.g. Everyday Card')}
 
           {installment ? (
             <View style={styles.row}>

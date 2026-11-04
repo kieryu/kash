@@ -6,7 +6,7 @@ import { statementCheckins, type Db } from '@/db/schema';
 import { simulate } from '@/engine/simulate';
 
 import { checkInImpact, impactText, reasonsFor, saveCheckIn, statementDate } from '../checkin';
-import { outcome, tradeOff } from '../compare';
+import { breakdown, outcome, tradeOff } from '../compare';
 import { loadSnapshot, monthPlan, projection, type Snapshot } from '../dashboard';
 import { toEngineDebts } from '../engineDebts';
 import { explainRows } from '../explain';
@@ -109,6 +109,25 @@ describe('compare strategies', () => {
     updateSettings(db, { strategy: 'avalanche' });
     const r = simulate({ ...rawInput(db), strategy: { kind: 'snowball' } });
     expect(r.status === 'ok' && outcome(snap(db), 'snowball')?.interest).toBe(r.status === 'ok' && r.totals.interest);
+  });
+
+  it('breaks a result down into payoff order, this month and totals', () => {
+    const { db, a, b } = setup();
+    const snow = breakdown(snap(db), 'snowball')!;
+    const aval = breakdown(snap(db), 'avalanche')!;
+    // Snowball clears the smaller family loan first; Avalanche the 3% card.
+    expect(snow.order.map((d) => d.id)).toEqual([b, a]);
+    expect(aval.order.map((d) => d.id)).toEqual([a, b]);
+    for (const [k, x] of [['snowball', snow], ['avalanche', aval]] as const) {
+      expect(x.interest).toBe(outcome(snap(db), k)!.interest);
+      expect(x.order.reduce((n, d) => n + d.interest, 0)).toBe(x.interest);
+      expect(x.debtFree).toBe(x.order.at(-1)!.payoff);
+      // Budget = minimums + the extra going to the focus debt.
+      expect(x.minimums + x.lines.reduce((n, l) => n + l.extra, 0)).toBe(x.budget);
+      expect(x.lines.filter((l) => l.extra > 0).every((l) => l.isTarget)).toBe(true);
+    }
+    expect(snow.lines.find((l) => l.isTarget)?.id).toBe(b);
+    expect(aval.lines.find((l) => l.isTarget)?.id).toBe(a);
   });
 
   it('describes the trade-off plainly', () => {

@@ -85,6 +85,7 @@ export function LockScreen({ lock, onUnlock, onWipe }: Props) {
         title="Enter your PIN"
         message={waiting ? `Too many tries. Try again in ${formatWait(waitUntil - now)}.` : notice}
         disabled={waiting}
+        busyText="Checking your PIN…"
         onComplete={submitPin}
         onBiometrics={
           lock.biometrics

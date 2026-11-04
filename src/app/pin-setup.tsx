@@ -30,6 +30,7 @@ export default function PinSetup() {
       title={first === null ? 'Choose a 4-digit PIN' : 'Enter it again'}
       subtitle={first === null ? 'Use it when fingerprint or face unlock isn’t available.' : undefined}
       message={message}
+      busyText={first === null ? undefined : 'Saving your PIN…'}
       onComplete={complete}
       onBack={() => (first === null ? router.back() : setFirst(null))}
     />

@@ -13,7 +13,7 @@
     "preview": {
       "distribution": "internal",
       "android": { "buildType": "apk" },
-      "env": { "EXPO_NO_TELEMETRY": "1", "KASH_NO_INTERNET": "1" }
+      "env": { "EXPO_NO_TELEMETRY": "1", "KASH_NO_INTERNET": "1", "KASH_TESTER_TOOLS": "1" }
     },
     "production": {
       "autoIncrement": true,

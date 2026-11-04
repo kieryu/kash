@@ -1,7 +1,7 @@
 import type { Settings } from '@/db/schema';
 import type { Minor, YearMonth } from '@/engine/types';
 
-import { projection, type Snapshot } from './dashboard';
+import { budgetOf, monthPlan, projection, type Snapshot } from './dashboard';
 import { monthsBetween } from './format';
 
 // 11 Compare strategies: the same snapshot and budget under each free strategy.
@@ -17,6 +17,40 @@ export function outcome(s: Snapshot, strategy: StrategyKey): StrategyOutcome {
   // Debts already at zero have nothing paid in the plan; they don't count as "first gone".
   const payoffs = Object.values(r.perDebt).filter((d) => d.paid > 0).map((d) => d.payoff).sort();
   return { debtFree: r.debtFree, interest: r.totals.interest, firstGone: payoffs[0] ?? r.debtFree };
+}
+
+export type Breakdown = {
+  /** Debts in the order they're paid off, with their share of the interest. */
+  order: { id: string; name: string; payoff: YearMonth; interest: Minor }[];
+  /** This month: minimum + extra per debt. */
+  lines: { id: string; name: string; minimum: Minor; extra: Minor; isTarget: boolean }[];
+  budget: Minor;
+  minimums: Minor;
+  interest: Minor;
+  debtFree: YearMonth;
+};
+
+/** R7: the numbers behind a strategy's result, from the user's own debts; null when there's no debt-free date. */
+export function breakdown(s: Snapshot, strategy: StrategyKey): Breakdown | null {
+  const snap = { ...s, settings: { ...s.settings, strategy } };
+  const r = projection(snap);
+  if (r.status !== 'ok') return null;
+  const name = (id: string) => s.rows.find((d) => d.id === id)?.nickname ?? '';
+  const order = Object.entries(r.perDebt)
+    .filter(([, d]) => d.paid > 0)
+    .map(([id, d]) => ({ id, name: name(id), payoff: d.payoff, interest: d.interest }))
+    .sort((a, b) => a.payoff.localeCompare(b.payoff));
+  const lines = monthPlan(snap)
+    .lines.filter((l) => l.paidMinimum + l.paidExtra > 0)
+    .map((l) => ({ id: l.debtId, name: name(l.debtId), minimum: l.paidMinimum, extra: l.paidExtra, isTarget: l.isTarget }));
+  return {
+    order,
+    lines,
+    budget: budgetOf(snap),
+    minimums: lines.reduce((n, l) => n + l.minimum, 0),
+    interest: r.totals.interest,
+    debtFree: r.debtFree,
+  };
 }
 
 /** "Avalanche saves about ₱860 and 1 month. Snowball clears your first debt 3 months sooner." */

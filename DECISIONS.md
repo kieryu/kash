@@ -192,5 +192,19 @@ Included: unlimited debts (the only built Pro feature; My own order is free, D3)
 `eas.json` preview sets `KASH_NO_INTERNET=1`; `app.config.ts` then adds `android.blockedPermissions: ['android.permission.INTERNET']`. Dev builds keep it (Metro). Production keeps it until billing is in and tested without it (D33). Guarded by `networkGuard.test.ts`.
 **Why:** testers get OS-enforced offline; any library that tries to phone home fails visibly instead of silently. Reversible: remove the env var.
 
+### D39. Debt nickname is optional with a bank template (2026-11-04, R5)
+With a bank template, "Nickname (optional)" falls back to the template name ("BDO Visa"). With Custom, the field becomes a required "Card name" ("Name" for other debt types). The DB column stays NOT NULL; the form always fills it.
+**Why:** device testing (docs/revisions.md R5). One less field to type for most cards, and every debt still has a name for reminders and lists.
+**Trade-off:** two cards from the same template get the same name unless the user adds nicknames.
+
+### D40. App icon and splash: option 1, green Pom (2026-11-04, R9/R10)
+Icon, adaptive foreground and splash mascot come from `assets/kash-icons` option 1 on `#1E5B47`. The old adaptive background and monochrome (themed) icon were removed because they didn't match the new art.
+**Why:** device testing (R9, R10). **Trade-off:** no Android 13 themed icon until a monochrome version of the Pom is drawn. Needs a new EAS build to show up.
+
+### D41. Tester tools in preview builds (2026-11-04, R11)
+`eas.json` preview sets `KASH_TESTER_TOOLS=1` → `extra.testerTools` → `TESTER_TOOLS` (`src/config/app.ts`). Settings then shows "Tester tools": a free "Pro (test)" switch and the encrypted-DB check. Dev builds always show it; production never (guarded by `networkGuard.test.ts`).
+**Why:** billing is still a stub (D37), so testers on APK/Firebase builds had no way to try Pro. On Play, license testers will test real purchases instead.
+**Trade-off:** anyone with a preview APK gets Pro free. Fine for invited testers; never ship a preview APK publicly.
+
 ## Costs
 No paid services so far. See brief §19.

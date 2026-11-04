@@ -14,7 +14,7 @@ export default function Privacy() {
     <OnboardingScreen
       step={1}
       art={<PhoneLock />}
-      title="Your money stays on this phone"
+      title="Your data stays on this phone"
       body={`${APP_NAME} has no account, no cloud and no servers. Everything you enter is encrypted and saved only on this device.`}
       footer={
         <>

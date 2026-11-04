@@ -92,6 +92,12 @@ describe('parseDebtForm', () => {
     expect(!r.ok && Object.keys(r.errors).sort()).toEqual(['balance', 'color', 'dueDay', 'minimum', 'nickname', 'rate']);
   });
 
+  it('names an unnamed debt after its template; Custom needs a name', () => {
+    expect(parseDebtForm({ ...card, nickname: ' ' }, 'PHP')).toMatchObject({ ok: true, debt: { nickname: 'BDO Visa' } });
+    const custom = parseDebtForm({ ...card, templateId: 'custom', nickname: '' }, 'PHP');
+    expect(!custom.ok && custom.errors.nickname).toBe('Give it a name you’ll recognise.');
+  });
+
   it('requires a due day for cards only', () => {
     expect(parseDebtForm({ ...card, dueDay: '' }, 'PHP').ok).toBe(false);
     expect(parseDebtForm({ ...card, segment: 'loan', templateId: 'sss', payment: '1000', monthsLeft: '12', dueDay: '' }, 'PHP')).toMatchObject({

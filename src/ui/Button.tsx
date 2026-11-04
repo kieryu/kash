@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     borderWidth: size.border,
     borderColor: colors.lineStrong,
   },
-  compact: { ...center, minHeight: size.hitTarget, paddingVertical: space.xs, borderRadius: radius.input, backgroundColor: colors.primary },
+  compact: { ...center, minHeight: size.hitTarget, paddingVertical: space.xs, paddingHorizontal: space.lg, borderRadius: radius.input, backgroundColor: colors.primary },
   link: { ...center, minHeight: size.hitTarget, padding: space.md },
   text: type.button,
   compactText: type.rowTitle,

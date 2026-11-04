@@ -24,6 +24,20 @@ const CARDS: { id: Id; name: string; how: string; best: string; pro?: boolean }[
   { id: 'hybrid', name: 'Hybrid', how: 'Clear one or two small debts for momentum, then switch to Avalanche.', best: 'Motivation first, savings after', pro: true },
 ];
 
+// R4: the same three sample debts on every card, so the orders can be compared.
+const SAMPLE = {
+  shop: { title: 'Shopping card', detail: '₱5,000 at 2%/mo' },
+  main: { title: 'Main card', detail: '₱20,000 at 3.5%/mo' },
+  phone: { title: 'Phone loan', detail: '₱12,000 at 1%/mo' },
+};
+const EXAMPLES: Record<Id, (keyof typeof SAMPLE)[]> = {
+  snowball: ['shop', 'phone', 'main'], // smallest balance first
+  avalanche: ['main', 'shop', 'phone'], // highest rate first
+  custom: ['phone', 'main', 'shop'], // e.g. the phone loan first, for your own reasons
+  cost: ['main', 'phone', 'shop'], // ₱700, ₱120, ₱100 of interest a month
+  hybrid: ['shop', 'main', 'phone'], // one quick win, then highest rate
+};
+
 const PAGE = theme.size.strategyCardWidth + 14;
 
 // 04 Choose a strategy. "Help me choose" opens the 04a quiz, which comes back with `recommended`.
@@ -99,6 +113,7 @@ export default function Strategy() {
             selected={c.id === picked}
             recommended={c.id === recommended}
             art={<Art id={c.id} />}
+            example={EXAMPLES[c.id].map((k) => SAMPLE[k])}
             onPress={() => setPicked(c.id)}
           />
         ))}

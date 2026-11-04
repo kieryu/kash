@@ -93,7 +93,7 @@ Support multiple debt types because many users carry more than cards. Each type 
 | Other | Generic fields |
 
 ### Account fields
-- **Nickname** (required), **type**, **issuer** (optional; from a preset list of common PH banks/issuers or "Other")
+- **Nickname** (optional with a bank template, falls back to the template name; required as "Card name" for Custom, see D39), **type**, **issuer** (optional; from a preset list of common PH banks/issuers or "Other")
 - **Card template**: pick an issuer + product template (e.g. "BDO Credit Card — Visa", "BDO Credit Card — Mastercard", "UnionBank — Visa") or "Custom". See §18 for the rules on bank names, logos, and network marks.
 - **Card style**: the template sets default colors; the user can override with a color picker (hex input + swatches).
 - **Currency** (defaults to the home currency; see §15)

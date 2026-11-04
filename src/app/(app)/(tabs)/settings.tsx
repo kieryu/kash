@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { formatBackupDate } from '@/backup/preview';
 import { BILLING_MESSAGES, PRO_PRICE, restorePro } from '@/billing/billing';
-import { APP_NAME } from '@/config/app';
+import { APP_NAME, TESTER_TOOLS } from '@/config/app';
 import { getAppDb } from '@/db/client';
 import { getEntitlement, getSettings, setEntitlement, updateSettings } from '@/db/repositories/settings';
 import type { Settings as SettingsRow } from '@/db/schema';
@@ -247,13 +247,13 @@ export default function Settings() {
           {APP_NAME} {Constants.expoConfig?.version ?? ''} · Not financial advice · Estimates only{'\n'}Not affiliated with any bank or card network
         </Text>
 
-        {__DEV__ ? <DevTools isPro={isPro} onChange={refresh} /> : null}
+        {TESTER_TOOLS ? <DevTools isPro={isPro} onChange={refresh} /> : null}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// Dev builds only: SQLCipher check and a test Pro switch for trying the gating.
+// Dev and tester builds only: SQLCipher check and a test Pro switch for trying the gating.
 function DevTools({ isPro, onChange }: { isPro: boolean; onChange: () => void }) {
   const [steps, setSteps] = useState<CheckStep[] | null>(null);
   const setPro = async (on: boolean) => {
@@ -261,8 +261,8 @@ function DevTools({ isPro, onChange }: { isPro: boolean; onChange: () => void })
     onChange();
   };
   return (
-    <Section title="Developer">
-      <SwitchRow first label="Pro (test)" hint="Dev builds only" value={isPro} onChange={setPro} />
+    <Section title="Tester tools">
+      <SwitchRow first label="Pro (test)" hint="Test builds only · free, no purchase" value={isPro} onChange={setPro} />
       <Row label="Encrypted database check" value="Run" onPress={async () => setSteps(await runDbSelfCheck())} />
       {steps?.map((st) => <Row key={st.name} label={`${st.ok ? '✓' : '✗'} ${st.name}`} hint={st.detail ?? undefined} />)}
     </Section>

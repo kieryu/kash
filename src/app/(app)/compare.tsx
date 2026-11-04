@@ -6,9 +6,9 @@ import { APP_NAME } from '@/config/app';
 import { getAppDb } from '@/db/client';
 import { updateSettings } from '@/db/repositories/settings';
 import type { Settings } from '@/db/schema';
-import { outcome, tradeOff, type StrategyKey, type StrategyOutcome } from '@/domain/compare';
+import { breakdown, outcome, tradeOff, type Breakdown, type StrategyKey, type StrategyOutcome } from '@/domain/compare';
 import { budgetOf, loadSnapshot, moneyText, type Snapshot } from '@/domain/dashboard';
-import { formatYearMonth } from '@/domain/format';
+import { formatYearMonth, timeUntil } from '@/domain/format';
 import { theme } from '@/theme';
 import { BackScreen } from '@/ui/Backup';
 import { Button } from '@/ui/Button';
@@ -24,7 +24,8 @@ export default function Compare() {
   useFocusEffect(refresh);
 
   const results = useMemo(() => (snap ? { snowball: outcome(snap, 'snowball'), avalanche: outcome(snap, 'avalanche') } : null), [snap]);
-  if (!snap || !results) return null;
+  const details = useMemo(() => (snap ? { snowball: breakdown(snap, 'snowball'), avalanche: breakdown(snap, 'avalanche') } : null), [snap]);
+  if (!snap || !results || !details) return null;
 
   const current = snap.settings.strategy;
   const money = (n: number) => moneyText(n, snap.settings.homeCurrency, snap.settings.hideBalances);
@@ -38,7 +39,16 @@ export default function Compare() {
     <BackScreen title="Compare strategies" onBack={() => router.back()}>
       <Text style={styles.body}>Same {money(budget)} a month, different order.</Text>
       {(['snowball', 'avalanche'] as const).map((k) => (
-        <ResultCard key={k} name={NAMES[k]} result={results[k]} current={k === current} money={money} onSwitch={() => choose(k)} />
+        <ResultCard
+          key={k}
+          name={NAMES[k]}
+          result={results[k]}
+          detail={details[k]}
+          month={snap.month}
+          current={k === current}
+          money={money}
+          onSwitch={() => choose(k)}
+        />
       ))}
       <View style={styles.tradeOff}>
         <Text style={styles.tradeOffText}>
@@ -78,10 +88,21 @@ export default function Compare() {
   );
 }
 
-type CardProps = { name: string; result: StrategyOutcome; current: boolean; money: (n: number) => string; onSwitch: () => void };
+type Money = (n: number) => string;
+type CardProps = {
+  name: string;
+  result: StrategyOutcome;
+  detail: Breakdown | null;
+  month: string;
+  current: boolean;
+  money: Money;
+  onSwitch: () => void;
+};
 
-function ResultCard({ name, result, current, money, onSwitch }: CardProps) {
-  const ym = (m: string | undefined) => (m ? formatYearMonth(m, undefined, 'short') : '—');
+const ym = (m: string | undefined) => (m ? formatYearMonth(m, undefined, 'short') : '—');
+
+function ResultCard({ name, result, detail, month, current, money, onSwitch }: CardProps) {
+  const [open, setOpen] = useState(false);
   return (
     <View style={[styles.card, current && styles.cardCurrent]}>
       <View style={styles.cardHead}>
@@ -93,7 +114,61 @@ function ResultCard({ name, result, current, money, onSwitch }: CardProps) {
         <Stat label="Total interest" value={result ? money(result.interest) : '—'} />
         <Stat label="First debt gone" value={ym(result?.firstGone)} />
       </View>
+      {detail ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: open }}
+          onPress={() => setOpen(!open)}
+          style={({ pressed }) => [styles.toggle, pressed && styles.pressed]}
+        >
+          <Text style={styles.toggleText}>{open ? 'Hide the computation' : 'See the computation'}</Text>
+        </Pressable>
+      ) : null}
+      {open && detail ? <Computation detail={detail} month={month} money={money} /> : null}
       {current ? null : <Button variant="secondary" label={`Switch to ${name}`} onPress={onSwitch} />}
+    </View>
+  );
+}
+
+// R7: how this strategy's numbers come from the user's own debts.
+function Computation({ detail: d, month, money }: { detail: Breakdown; month: string; money: Money }) {
+  const extra = d.budget - d.minimums;
+  const focus = d.lines.find((l) => l.isTarget);
+  return (
+    <View style={styles.math}>
+      <Text style={styles.mathTitle}>Payoff order</Text>
+      {d.order.map((o, i) => (
+        <View key={o.id} style={styles.mathRow}>
+          <Text style={styles.mathName} numberOfLines={1}>
+            {i + 1}. {o.name}
+          </Text>
+          <Text style={styles.mathValue}>{ym(o.payoff)}</Text>
+        </View>
+      ))}
+
+      <Text style={styles.mathTitle}>This month ({formatYearMonth(month, undefined, 'short')})</Text>
+      {d.lines.map((l) => (
+        <View key={l.id} style={styles.mathRow}>
+          <Text style={[styles.mathName, l.isTarget && styles.focus]} numberOfLines={1}>
+            {l.name}
+            {l.isTarget ? ' · focus' : ''}
+          </Text>
+          <Text style={styles.mathValue}>{l.extra > 0 ? `${money(l.minimum)} + ${money(l.extra)}` : money(l.minimum)}</Text>
+        </View>
+      ))}
+
+      <Text style={styles.mathTitle}>The math</Text>
+      <Text style={styles.formula}>
+        Extra each month = {money(d.budget)} budget − {money(d.minimums)} minimums = <Text style={styles.strongInk}>{money(Math.max(0, extra))}</Text>
+        {focus ? `, all to ${focus.name}` : ''}
+      </Text>
+      <Text style={styles.formula}>
+        Total interest = {d.order.map((o) => money(o.interest)).join(' + ')} = <Text style={styles.strongInk}>{money(d.interest)}</Text>
+      </Text>
+      <Text style={styles.formula}>
+        Last debt paid off in {formatYearMonth(d.debtFree)}, <Text style={styles.strongInk}>{timeUntil(month, d.debtFree)}</Text>
+      </Text>
+      <Text style={styles.mathNote}>When a debt is paid off, its payment rolls into the next one in the order.</Text>
     </View>
   );
 }
@@ -130,4 +205,15 @@ const styles = StyleSheet.create({
   pro: { ...type.captionBold, color: colors.proChipText, backgroundColor: colors.proChipBg, borderRadius: radius.pill, paddingVertical: space.xs, paddingHorizontal: 10, overflow: 'hidden' },
   pressed: { opacity: 0.85 },
   footnote: { ...type.caption, color: colors.muted, textAlign: 'center' },
+  toggle: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
+  toggleText: { ...type.rowTitleSm, color: colors.primary },
+  math: { gap: 6, backgroundColor: colors.bg, borderRadius: radius.card, padding: space.md },
+  mathTitle: { ...type.captionBold, color: colors.muted, textTransform: 'uppercase', marginTop: space.xs },
+  mathRow: { flexDirection: 'row', justifyContent: 'space-between', gap: space.sm },
+  mathName: { ...type.bodySm, color: colors.ink, flexShrink: 1 },
+  focus: { ...type.rowTitleSm, color: colors.primary },
+  mathValue: { ...type.bodySm, color: colors.inkSoft },
+  formula: { ...type.bodySm, color: colors.inkSoft },
+  strongInk: { ...type.rowTitleSm, color: colors.ink },
+  mathNote: { ...type.caption, color: colors.muted },
 });
