@@ -8,6 +8,7 @@ import { getAppDb } from '@/db/client';
 import { checkInImpact, impactText, REASON_LABELS, REASON_NOTES, reasonsFor, saveCheckIn, statementDate, type CheckInReason } from '@/domain/checkin';
 import { balancesOf, loadSnapshot, moneyText, shortDate, type LoadedSnapshot } from '@/domain/dashboard';
 import { parseMoney, today } from '@/domain/format';
+import { billedThisMonth, childrenOf } from '@/domain/installments';
 import { firstPayoff } from '@/domain/payments';
 import { rescheduleReminders } from '@/notifications/reminders';
 import { theme } from '@/theme';
@@ -15,6 +16,7 @@ import { Note } from '@/ui/Backup';
 import { Button, Chip, IconButton } from '@/ui/Button';
 import { TextField } from '@/ui/Controls';
 import { CloseIcon } from '@/ui/icons';
+import { KeyboardAvoid } from '@/ui/Keyboard';
 import { Mascot } from '@/ui/Mascot';
 
 // 10 Statement check-in. From 09 Debt detail ("Update balance") or a statement-day reminder.
@@ -31,11 +33,15 @@ export default function CheckIn() {
   const day = today();
   const on = statementDate(debt?.statementDay ?? null, day);
   const amount = debt ? parseMoney(text, debt.currency) : null;
-  const expected = snap ? (balancesOf(snap.txs).get(id) ?? 0) : 0;
-  const difference = amount === null ? 0 : amount - expected;
+  // R20: the statement total includes this month's installments; the card's own balance is the rest.
+  const billed = snap ? childrenOf(snap.rows, id).reduce((s, k) => s + billedThisMonth(k, snap), 0) : 0;
+  const tooLow = amount !== null && amount < billed;
+  const own = amount === null || tooLow ? null : amount - billed;
+  const expected = (snap ? (balancesOf(snap.txs).get(id) ?? 0) : 0) + billed;
+  const difference = own === null ? 0 : amount! - expected;
   const options = reasonsFor(difference);
   const reason = picked && options.includes(picked) ? picked : (options[0] ?? null);
-  const impact = snap && amount !== null ? checkInImpact(snap, id, amount, reason, on) : null;
+  const impact = snap && own !== null ? checkInImpact(snap, id, own, reason, on) : null;
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
   if (!snap) return null;
@@ -61,9 +67,9 @@ export default function CheckIn() {
   const money = (n: number) => moneyText(n, debt.currency, snap.settings.hideBalances);
 
   const save = async () => {
-    if (amount === null) return;
+    if (own === null) return;
     const db = await getAppDb();
-    const changed = saveCheckIn(db, debt.id, amount, reason, on);
+    const changed = saveCheckIn(db, debt.id, own, reason, on);
     if (changed) rescheduleReminders(db).catch(() => {});
     if (changed && firstPayoff(db, debt.id)) return router.replace({ pathname: '/paid-off/[id]', params: { id: debt.id } });
     close();
@@ -72,52 +78,56 @@ export default function CheckIn() {
   return (
     <SafeAreaView style={styles.screen}>
       <Header pill={debt.statementDay ? `Statement day · ${shortDate(on)}` : 'Statement check-in'} onClose={close} />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.titleRow}>
-          <Mascot mood="think" size={72} />
-          <Text accessibilityRole="header" style={styles.title}>
-            Update your {debt.nickname} balance
-          </Text>
-        </View>
-        <Text style={styles.body}>Your new statement is out. Type the balance shown on it, and Kash will adjust your plan.</Text>
-        <View style={styles.expected}>
-          <Text style={styles.small}>Kash expected</Text>
-          <Text style={styles.expectedValue}>{money(expected)}</Text>
-        </View>
-        <TextField
-          label="Statement balance"
-          value={text}
-          onChangeText={setText}
-          keyboardType="decimal-pad"
-          placeholder="0.00"
-          style={styles.amountInput}
-        />
-
-        {amount !== null && difference !== 0 ? (
-          <View style={styles.card}>
-            <Text style={styles.cardText}>
-              <Text style={styles.strong}>
-                {difference > 0 ? '+' : '−'}
-                {money(Math.abs(difference))}
-              </Text>
-              {difference > 0 ? ' more than expected. What was it?' : ' less than expected.'}
+      <KeyboardAvoid>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <View style={styles.titleRow}>
+            <Mascot mood="think" size={72} />
+            <Text accessibilityRole="header" style={styles.title}>
+              Update your {debt.nickname} balance
             </Text>
-            <View style={styles.chips}>
-              {options.map((o) => (
-                <Chip key={o} label={REASON_LABELS[o]} selected={o === reason} onPress={() => setPicked(o)} />
-              ))}
-            </View>
-            {reason ? <Text style={styles.cardNote}>{REASON_NOTES[reason]}</Text> : null}
           </View>
-        ) : null}
-        {amount !== null && difference === 0 ? <Text style={styles.body}>Matches what Kash expected. Nice.</Text> : null}
+          <Text style={styles.body}>Your new statement is out. Type the balance shown on it, and Kash will adjust your plan.</Text>
+          <View style={styles.expected}>
+            <Text style={styles.small}>Kash expected</Text>
+            <Text style={styles.expectedValue}>{money(expected)}</Text>
+          </View>
+          <TextField
+            label="Statement balance"
+            value={text}
+            onChangeText={setText}
+            keyboardType="decimal-pad"
+            placeholder="0.00"
+            style={styles.amountInput}
+          />
 
-        {impact ? <Note>{impactText(impact.before, impact.after, reason)}</Note> : null}
-        <Text style={styles.footnote}>Estimates only — real statements may differ.</Text>
-      </ScrollView>
-      <View style={styles.footer}>
-        <Button label="Save balance" onPress={save} disabled={amount === null} />
-      </View>
+          {billed > 0 ? <Text style={styles.body}>Use the total on your statement. It already includes this month’s installments ({money(billed)}).</Text> : null}
+          {tooLow ? <Text style={styles.body}>That’s less than this month’s installments ({money(billed)}). Check the total on your statement.</Text> : null}
+          {own !== null && difference !== 0 ? (
+            <View style={styles.card}>
+              <Text style={styles.cardText}>
+                <Text style={styles.strong}>
+                  {difference > 0 ? '+' : '−'}
+                  {money(Math.abs(difference))}
+                </Text>
+                {difference > 0 ? ' more than expected. What was it?' : ' less than expected.'}
+              </Text>
+              <View style={styles.chips}>
+                {options.map((o) => (
+                  <Chip key={o} label={REASON_LABELS[o]} selected={o === reason} onPress={() => setPicked(o)} />
+                ))}
+              </View>
+              {reason ? <Text style={styles.cardNote}>{REASON_NOTES[reason]}</Text> : null}
+            </View>
+          ) : null}
+          {own !== null && difference === 0 ? <Text style={styles.body}>Matches what Kash expected. Nice.</Text> : null}
+
+          {impact ? <Note>{impactText(impact.before, impact.after, reason)}</Note> : null}
+          <Text style={styles.footnote}>Estimates only — real statements may differ.</Text>
+        </ScrollView>
+        <View style={styles.footer}>
+          <Button label="Save balance" onPress={save} disabled={own === null} />
+        </View>
+      </KeyboardAvoid>
     </SafeAreaView>
   );
 }

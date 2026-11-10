@@ -7,10 +7,11 @@ import { theme } from '@/theme';
 
 import { IconButton } from './Button';
 import { BackIcon, CheckBadge } from './icons';
+import { KeyboardAvoid } from './Keyboard';
 
 const STEPS = 5;
 
-/** "Step N of 5" bar at the top of onboarding screens 02–07. */
+/** "Step N of 5" bar on onboarding screens 02–07, just above the main button (R13). */
 export function StepBar({ step }: { step: number }) {
   return (
     <View style={styles.steps} accessible accessibilityLabel={`Step ${step} of ${STEPS}`}>
@@ -22,47 +23,51 @@ export function StepBar({ step }: { step: number }) {
 }
 
 type Props = {
-  step: number;
-  /** Illustration between the step bar and the title (02, 03). */
+  /** Step bar position; leave out on screens reopened after onboarding (budget edit). */
+  step?: number;
+  /** Illustration above the title (02, 03). */
   art?: ReactNode;
   title: string;
   body?: ReactNode;
   children?: ReactNode;
-  /** Pinned below the scrolling content (primary button). */
+  /** Pinned below the scrolling content, under the step bar (primary button). */
   footer: ReactNode;
-  /** Strategy carousel runs edge to edge. */
-  fullBleed?: boolean;
-  /** Back arrow left of the step bar. Default: go back a screen, when there is one. */
+  /** Back arrow at the top. Default: go back a screen, when there is one. */
   onBack?: () => void;
 };
 
-/** Shared onboarding layout: step bar, H1 + body, content, pinned footer. */
-export function OnboardingScreen({ step, art, title, body, children, footer, fullBleed, onBack: back }: Props) {
-  const pad = fullBleed ? styles.padded : null;
+/** Shared onboarding layout: back arrow, H1 + body, content, then the step bar and pinned footer. */
+export function OnboardingScreen({ step, art, title, body, children, footer, onBack: back }: Props) {
   const onBack = back ?? (router.canGoBack() ? () => router.back() : undefined);
   return (
     <SafeAreaView style={styles.screen}>
-      <ScrollView contentContainerStyle={[styles.content, !fullBleed && styles.padded]} showsVerticalScrollIndicator={false}>
-        <View style={[pad, onBack && styles.backRow]}>
-          {onBack ? (
-            <IconButton accessibilityLabel="Back" onPress={onBack}>
-              <BackIcon size={24} color={colors.ink} />
-            </IconButton>
-          ) : null}
-          <View style={styles.fill}>
-            <StepBar step={step} />
+      {onBack ? (
+        <View style={styles.backRow}>
+          <IconButton accessibilityLabel="Back" onPress={onBack}>
+            <BackIcon size={24} color={colors.ink} />
+          </IconButton>
+        </View>
+      ) : null}
+      <KeyboardAvoid>
+        <ScrollView
+          contentContainerStyle={[styles.content, styles.padded, onBack && styles.contentUnderBack]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {art ? <View style={styles.art}>{art}</View> : null}
+          <View style={styles.head}>
+            <Text accessibilityRole="header" style={styles.h1}>
+              {title}
+            </Text>
+            {body ? <Text style={styles.body}>{body}</Text> : null}
           </View>
+          {children}
+        </ScrollView>
+        <View style={styles.footer}>
+          {step ? <StepBar step={step} /> : null}
+          {footer}
         </View>
-        {art ? <View style={styles.art}>{art}</View> : null}
-        <View style={[styles.head, pad]}>
-          <Text accessibilityRole="header" style={styles.h1}>
-            {title}
-          </Text>
-          {body ? <Text style={styles.body}>{body}</Text> : null}
-        </View>
-        {children}
-      </ScrollView>
-      <View style={styles.footer}>{footer}</View>
+      </KeyboardAvoid>
     </SafeAreaView>
   );
 }
@@ -102,8 +107,8 @@ const styles = StyleSheet.create({
   steps: { flexDirection: 'row', gap: 6 },
   step: { flex: 1, height: 4, borderRadius: radius.pill, backgroundColor: colors.handle },
   stepOn: { backgroundColor: colors.primary },
-  backRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  fill: { flex: 1 },
+  backRow: { flexDirection: 'row', paddingHorizontal: space.screenOnboarding - space.sm, paddingTop: space.sm },
+  contentUnderBack: { paddingTop: space.md },
   answer: {
     flexDirection: 'row',
     alignItems: 'center',

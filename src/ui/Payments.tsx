@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AccessibilityInfo, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { theme } from '@/theme';
 
 import { Button, Chip } from './Button';
 import { CheckIcon, TargetIcon } from './icons';
+import { KeyboardAvoid } from './Keyboard';
 
 // Presentational only: amounts arrive formatted, the screen owns the plan and the DB writes.
 
@@ -106,6 +107,9 @@ type SheetProps = {
   impact: { text: string; tone: 'good' | 'warn' };
   onSave: () => void;
   onClose: () => void;
+  /** Defaults are the payment wording; Log a purchase reuses the sheet (R24). */
+  amountLabel?: string;
+  saveLabel?: string;
 };
 
 export function LogPaymentSheet(p: SheetProps) {
@@ -114,7 +118,7 @@ export function LogPaymentSheet(p: SheetProps) {
   const good = p.impact.tone === 'good';
   return (
     <Modal visible={p.visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={p.onClose} statusBarTranslucent>
-      <KeyboardAvoidingView style={styles.modal} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoid style={styles.modal}>
         <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={p.onClose} style={styles.scrim} />
         <View accessibilityViewIsModal style={[styles.sheet, { paddingBottom: 28 + insets.bottom }]}>
           <View style={styles.handle} />
@@ -128,11 +132,11 @@ export function LogPaymentSheet(p: SheetProps) {
             <Text style={styles.date}>{p.dateLabel}</Text>
           </View>
           <View style={styles.field}>
-            <Text style={styles.label}>Amount you paid</Text>
+            <Text style={styles.label}>{p.amountLabel ?? 'Amount you paid'}</Text>
             <View style={styles.amountBox}>
               <Text style={styles.amountInput}>{p.currencySymbol}</Text>
               <TextInput
-                accessibilityLabel="Amount you paid"
+                accessibilityLabel={p.amountLabel ?? 'Amount you paid'}
                 value={p.amountText}
                 onChangeText={p.onChangeAmount}
                 keyboardType="decimal-pad"
@@ -148,9 +152,9 @@ export function LogPaymentSheet(p: SheetProps) {
           <Text accessibilityLiveRegion="polite" style={[styles.impact, good ? styles.impactGood : styles.impactWarn]}>
             {p.impact.text}
           </Text>
-          <Button label="Save payment" onPress={p.onSave} />
+          <Button label={p.saveLabel ?? 'Save payment'} onPress={p.onSave} />
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardAvoid>
     </Modal>
   );
 }

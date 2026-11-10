@@ -11,7 +11,7 @@ Tick each line; note anything that looks off (screenshot with "Block screenshots
 
 ## 1. First launch (slices 0, 3, 5)
 - [ ] Splash → Privacy → Secure: fingerprint/face unlock turns on; PIN setup asks twice, rejects a mismatch.
-- [ ] 04 Strategy: swipe cards, Pro cards show the "later update" note, "Help me choose" quiz recommends and preselects a card.
+- [ ] 04 Strategy: vertical list, "Show example" animates open/closed and only one stays open, button always says "Continue", Pro cards show the "later update" note, "Help me choose" quiz recommends and preselects a card.
 - [ ] 05/06 Add debts: a credit card, an installment, a loan. Typing a 16-digit number in nickname/notes warns.
 - [ ] 07 Budget: debt-free date moves as you drag; below the minimums shows the shortfall.
 - [ ] "See my plan" asks for notification permission once.
@@ -33,6 +33,12 @@ Tick each line; note anything that looks off (screenshot with "Block screenshots
 - [ ] Pay a debt to zero → paid-off moment with one haptic buzz; only once.
 - [ ] Debts tab: edit, archive, restore, delete (strong confirm).
 - [ ] Phone font size at max: nothing clipped on dashboard, sheet, settings.
+- [ ] Card form: statement day (optional) saves and shows on debt detail; empty hides it.
+- [ ] Debt detail (card) → "Used this card again? Log a purchase": live message shows the date moving; history shows "New charges".
+- [ ] Installments (R20): add a card, Yes → Phone ₱2,000, statement shows 3 out of 10, statement balance ₱10,000. Card shows ₱10,000; detail lists "Phone · 3 of 10"; Debts tab "Total left" includes the rest.
+- [ ] Log payment on that card ₱5,000 → card shows ₱5,000; history shows "Payment · Phone" ₱2,000 and "Payment" ₱3,000; Undo reverses both.
+- [ ] Update balance on that card: hint says the total includes this month's installments.
+- [ ] Edit the card: change 3 → 4, add a second installment, remove one; numbers follow.
 
 ## 4. Reminders (slice 8)
 - [ ] Set a debt's due day to tomorrow, reminders "3 days before" → a reminder shows at 9:00 (or temporarily change the phone clock).
@@ -42,7 +48,7 @@ Tick each line; note anything that looks off (screenshot with "Block screenshots
 ## 5. Backup & settings (slices 9, 10)
 - [ ] Export encrypted backup → share sheet → save to Files.
 - [ ] Settings → Delete all data → back to splash. Onboarding 04 → "Have a backup? Restore it" → wrong password refused, right one shows preview → Replace all → data back.
-- [ ] Free plan: a 4th debt is read-only and opens Kash Pro; Pro (test) switch in dev tools unlocks it.
+- [ ] Free plan: a 4th debt is read-only and opens Kash Pro; buying Pro with a Play test card (license testing, Play-installed build) unlocks it.
 - [ ] Paywall: "Unlock" says purchases open at launch; "Coming in free updates" list shows.
 - [ ] Home currency relabel PHP → USD changes symbols, not amounts.
 

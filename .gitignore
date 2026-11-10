@@ -17,6 +17,10 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+# Google Play / Google Cloud service account keys (docs/play-console.md step 8)
+*service-account*.json
+*serviceAccount*.json
+pc-api-*.json
 
 # Metro
 .metro-health-check*

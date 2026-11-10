@@ -1,12 +1,13 @@
 import { updateDebt, type DebtPatch, type NewDebt } from '@/db/repositories/debts';
 import { addTransaction } from '@/db/repositories/transactions';
-import type { Db, DebtRow } from '@/db/schema';
+import type { Db, DebtRow, TransactionRow } from '@/db/schema';
 import templates from '@/data/cardTemplates.json';
-import type { Currency, Minor } from '@/engine/types';
+import type { Currency, Minor, YearMonth } from '@/engine/types';
 
 import { looksLikeCardNumber } from './cardNumber';
 import { installmentBalance } from './engineDebts';
 import { formatPercent, parseMoney, parsePercent } from './format';
+import { installmentNumber, type InstallmentInput } from './installments';
 import { amountInputText, syncPaidOff } from './payments';
 
 // Add-a-debt form (screen 06): the segment picks the fields, templates and stored kind.
@@ -60,6 +61,30 @@ export function templatesFor(segment: Segment): Template[] {
   return [...templates.filter((t) => t.id !== 'custom' && TEMPLATE_KINDS[segment].includes(t.kind)), CUSTOM_TEMPLATE];
 }
 
+export type IssuerGroup = { issuer: string; templates: Template[] };
+
+/**
+ * R16: templates grouped by issuer for the bank dropdown, in catalog order, "Custom" last.
+ * Each group's templates are its network options (R15), e.g. BDO → Visa, Mastercard.
+ */
+export function issuersFor(segment: Segment): IssuerGroup[] {
+  const groups: IssuerGroup[] = [];
+  for (const t of templatesFor(segment)) {
+    const g = groups.find((x) => x.issuer === t.issuer);
+    if (g) g.templates.push(t);
+    else groups.push({ issuer: t.issuer, templates: [t] });
+  }
+  return groups;
+}
+
+/** Label for a network option. Two cards on the same network add the product, e.g. "Visa (ex-Citi)". */
+export function optionLabel(t: Template, siblings: Template[]): string {
+  const base = t.network ?? t.product;
+  if (!t.network || siblings.filter((s) => s.network === t.network).length < 2 || t.product === 'Credit Card') return base;
+  const extra = /\(([^)]+)\)/.exec(t.product)?.[1] ?? t.product;
+  return `${base} (${extra})`;
+}
+
 /** Fixed monthly payment for N months (installments and loans) vs. a revolving balance. */
 export function isInstallment(segment: Segment): boolean {
   return segment === 'installment' || segment === 'loan';
@@ -70,6 +95,8 @@ export type DebtFormValues = {
   templateId: string;
   color: string;
   nickname: string;
+  /** Custom only: the name on the card's top line, e.g. "GCash GCredit". Empty = the debt type. */
+  issuer: string;
   // Revolving (card / other)
   balance: string;
   rate: string; // % per month
@@ -78,6 +105,8 @@ export type DebtFormValues = {
   payment: string;
   monthsLeft: string;
   dueDay: string;
+  /** Cards only, optional: the day the bank sends the bill. Drives the "update your balance" reminder. */
+  statementDay: string;
 };
 
 export type DebtFormField = keyof DebtFormValues;
@@ -96,23 +125,30 @@ export function parseDebtForm(v: DebtFormValues, currency: Currency): DebtFormRe
 
   if (!nickname) errors.nickname = 'Give it a name you’ll recognise.';
   else if (looksLikeCardNumber(nickname)) errors.nickname = 'This looks like a card number. Kash doesn’t need it — use a nickname instead.';
+  const issuer = tpl.id === 'custom' ? v.issuer.trim() || null : tpl.issuer;
+  if (issuer && looksLikeCardNumber(issuer)) errors.issuer = 'This looks like a card number. Kash doesn’t need it.';
   if (!HEX.test(v.color)) errors.color = 'Use a color like #1E5B47.';
 
   const dueDay = v.dueDay.trim() === '' ? null : Number(v.dueDay.replace(/\D/g, ''));
   if (dueDay === null ? v.segment === 'card' : !(Number.isInteger(dueDay) && dueDay >= 1 && dueDay <= 31)) {
     errors.dueDay = 'Enter a day from 1 to 31.';
   }
+  const statementDay = v.segment !== 'card' || v.statementDay.trim() === '' ? null : Number(v.statementDay.replace(/\D/g, ''));
+  if (statementDay !== null && !(Number.isInteger(statementDay) && statementDay >= 1 && statementDay <= 31)) {
+    errors.statementDay = 'Enter a day from 1 to 31.';
+  }
 
   const kind = tpl.id === 'custom' ? CUSTOM_KIND[v.segment] : v.segment === 'installment' && tpl.kind === 'credit_card' ? 'card_installment' : (tpl.kind as DebtRow['kind']);
   const base = {
     nickname,
     kind,
-    issuer: tpl.id === 'custom' ? null : tpl.issuer,
+    issuer,
     templateId: tpl.id,
     color: v.color.toUpperCase(),
     currency,
     rateEnteredAs: 'monthly' as const,
     dueDay,
+    statementDay,
     autoDeducted: false,
   };
 
@@ -166,13 +202,31 @@ export function formValuesOf(row: DebtRow, balance: Minor): DebtFormValues {
     templateId: row.templateId ?? CUSTOM_TEMPLATE.id,
     color: row.color,
     nickname: row.nickname,
+    issuer: row.templateId && row.templateId !== CUSTOM_TEMPLATE.id ? '' : (row.issuer ?? ''),
     balance: amountInputText(Math.max(0, balance), row.currency),
     rate: formatPercent(row.monthlyRate),
     minimum,
     payment: money(row.amortizationMinor),
     monthsLeft: row.amortizationMinor ? String(Math.ceil(Math.max(0, balance) / row.amortizationMinor)) : '',
     dueDay: row.dueDay ? String(row.dueDay) : '',
+    statementDay: row.statementDay ? String(row.statementDay) : '',
   };
+}
+
+/** Edit form: the card's running installments as "X of Y" inputs (R20). Fully paid ones are left out. */
+export function installmentInputsOf(kids: DebtRow[], txs: TransactionRow[], month: YearMonth): InstallmentInput[] {
+  return kids
+    .filter((k) => !k.paidOffOn)
+    .map((k) => {
+      const num = installmentNumber(k, { txs, month });
+      return {
+        id: k.id,
+        name: k.nickname === 'Installment' ? '' : k.nickname,
+        amount: amountInputText(k.amortizationMinor ?? 0, k.currency),
+        billed: String(num.n),
+        total: String(num.total),
+      };
+    });
 }
 
 export type DebtEdit = { patch: DebtPatch; correction: Minor };
@@ -193,7 +247,7 @@ export function parseDebtEdit(
   const r = parseDebtForm({ ...v, segment: orig.segment, balance: '1', monthsLeft: monthsChanged ? v.monthsLeft : '1' }, currency);
   if (!r.ok) return r;
   const d = r.debt;
-  const patch: DebtPatch = { nickname: d.nickname, kind: d.kind, issuer: d.issuer, templateId: d.templateId, color: d.color, dueDay: d.dueDay };
+  const patch: DebtPatch = { nickname: d.nickname, kind: d.kind, issuer: d.issuer, templateId: d.templateId, color: d.color, dueDay: d.dueDay, statementDay: d.statementDay };
   let correction = 0;
   if (isInstallment(orig.segment)) {
     const paymentChanged = v.payment !== orig.payment;

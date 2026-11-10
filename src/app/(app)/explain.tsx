@@ -8,6 +8,7 @@ import { balancesOf, budgetOf, loadSnapshot, monthPlan, projection, type Snapsho
 import { toEngineDebts } from '@/domain/engineDebts';
 import { explainRows } from '@/domain/explain';
 import { formatMoney, formatYearMonth } from '@/domain/format';
+import { displayName } from '@/domain/installments';
 import { theme } from '@/theme';
 import { BackScreen, Note } from '@/ui/Backup';
 
@@ -28,7 +29,7 @@ export default function Explain() {
   const plan = monthPlan(snap);
   const result = projection(snap);
   const debts = new Map(toEngineDebts(snap.rows, balancesOf(snap.txs)).map((d) => [d.id, d]));
-  const names = new Map(snap.rows.map((r) => [r.id, r.nickname]));
+  const names = new Map(snap.rows.map((r) => [r.id, displayName(snap.rows, r.id)]));
   const shownMonth = month ?? snap.month;
   const monthLines = shownMonth === snap.month ? plan.lines : result.status === 'ok' ? (result.months.find((m) => m.month === shownMonth)?.lines ?? []) : [];
   const lines = monthLines.filter((l) => (!id || l.debtId === id) && (shownMonth === snap.month || l.opening > 0));

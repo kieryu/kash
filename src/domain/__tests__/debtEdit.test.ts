@@ -59,6 +59,34 @@ describe('edit a debt', () => {
     expect(segmentOf(getDebt(db, createDebt(db, gadget, { balanceMinor: 1_000_000, on: '2026-10-01' }))!)).toBe('installment');
   });
 
+  it('adds and clears a card statement day', () => {
+    const db = testDb();
+    const id = createDebt(db, card, { balanceMinor: 821_000, on: '2026-10-01' });
+    expect(formValuesOf(getDebt(db, id)!, 821_000).statementDay).toBe('');
+    edit(db, id, (v) => {
+      v.statementDay = '12';
+    });
+    expect(getDebt(db, id)!.statementDay).toBe(12);
+    expect(formValuesOf(getDebt(db, id)!, 821_000).statementDay).toBe('12');
+    edit(db, id, (v) => {
+      v.statementDay = '';
+    });
+    expect(getDebt(db, id)!.statementDay).toBeNull();
+  });
+
+  it('edits the issuer name of a Custom debt', () => {
+    const db = testDb();
+    const id = createDebt(db, { ...card, templateId: 'custom', issuer: 'Maya' }, { balanceMinor: 100_000, on: '2026-10-01' });
+    expect(formValuesOf(getDebt(db, id)!, 100_000)).toMatchObject({ templateId: 'custom', issuer: 'Maya' });
+    edit(db, id, (v) => {
+      v.issuer = 'Maya Credit';
+    });
+    expect(getDebt(db, id)!.issuer).toBe('Maya Credit');
+    // A template debt's issuer comes from the template, not the text field.
+    const bdo = createDebt(db, card, { balanceMinor: 100_000, on: '2026-10-01' });
+    expect(formValuesOf(getDebt(db, bdo)!, 100_000).issuer).toBe('');
+  });
+
   it('revolving: changes terms, never the balance or history', () => {
     const db = testDb();
     const id = createDebt(db, card, { balanceMinor: 821_000, on: '2026-10-01' });

@@ -1,9 +1,10 @@
-import { getDebt, updateDebt } from '@/db/repositories/debts';
+import { getDebt, listDebts, updateDebt } from '@/db/repositories/debts';
 import { addTransaction, balanceOf, listTransactions, reverseTransaction } from '@/db/repositories/transactions';
 import type { Db, TransactionRow } from '@/db/schema';
 import type { Minor, YearMonth } from '@/engine/types';
 
 import { minorDigits } from './format';
+import { allocatePayment, childrenOf } from './installments';
 
 // Log Payment sheet: what it says, and the writes behind Save and Undo.
 
@@ -22,6 +23,8 @@ export type SheetTarget = {
   hint: string;
   /** Next focus debt once this one is cleared. */
   nextName?: string | null;
+  /** R20: a card with installments still running. Paying `balance` clears the statement, not the debt. */
+  hasInstallments?: boolean;
 };
 
 export function sheetTitle(t: SheetTarget): string {
@@ -49,6 +52,12 @@ export function sheetChips(t: SheetTarget, money: (n: Minor) => string): { label
 /** Live message under the amount: good = green, warn = amber. */
 export function sheetImpact(t: SheetTarget, amount: Minor | null, money: (n: Minor) => string): { text: string; tone: 'good' | 'warn' } {
   if (amount === null || amount <= 0) return { text: 'Enter the amount you paid.', tone: 'warn' };
+  if (amount >= t.balance && t.hasInstallments) {
+    return {
+      text: t.mode === 'extra' ? 'This clears the card balance. Your installments continue as planned.' : 'This pays this month in full. Your installments continue as planned.',
+      tone: 'good',
+    };
+  }
   if (amount >= t.balance) {
     return { text: `This clears ${t.name}! ${t.nextName ? `Your extra money moves to ${t.nextName} next.` : 'One debt down.'}`, tone: 'good' };
   }
@@ -90,7 +99,13 @@ export function amountInputText(minor: Minor, currency: string): string {
 export function savePayment(db: Db, t: Pick<SheetTarget, 'debtId' | 'mode'>, amount: Minor, month: YearMonth, on: string): boolean {
   if (!(Number.isSafeInteger(amount) && amount > 0)) throw new Error('Payment must be a positive amount');
   return db.transaction((tx) => {
-    addTransaction(tx, { debtId: t.debtId, type: 'payment', amountMinor: -amount, occurredOn: on, planMonth: month, isExtra: t.mode === 'extra' });
+    const isExtra = t.mode === 'extra';
+    // R20: a planned payment to a card pays this month's installments on it first. Extra money goes to the card itself.
+    const kids = isExtra ? [] : childrenOf(listDebts(tx), t.debtId);
+    const parts = kids.length
+      ? allocatePayment(kids, { txs: [t.debtId, ...kids.map((k) => k.id)].flatMap((id) => listTransactions(tx, id)), month }, t.debtId, amount)
+      : [{ debtId: t.debtId, amount }];
+    for (const p of parts) addTransaction(tx, { debtId: p.debtId, type: 'payment', amountMinor: -p.amount, occurredOn: on, planMonth: month, isExtra });
     return syncPaidOff(tx, t.debtId, on);
   });
 }
@@ -98,16 +113,31 @@ export function savePayment(db: Db, t: Pick<SheetTarget, 'debtId' | 'mode'>, amo
 /** Undo = a reversal row for each of this month's regular payments on the debt. Same return as savePayment. */
 export function undoPayment(db: Db, debtId: string, month: YearMonth, on: string): boolean {
   return db.transaction((tx) => {
-    for (const id of undoablePayments(listTransactions(tx, debtId), debtId, month)) reverseTransaction(tx, id, on);
+    // R20: the card's payment may have been split onto its installments; undo those too.
+    for (const id of [debtId, ...childrenOf(listDebts(tx), debtId).map((k) => k.id)]) {
+      for (const txId of undoablePayments(listTransactions(tx, id), id, month)) reverseTransaction(tx, txId, on);
+    }
     return syncPaidOff(tx, debtId, on);
   });
 }
 
-/** Sets or clears `paid_off_on` from the balance. Returns true when it changed. */
+/**
+ * Sets or clears `paid_off_on` from the balance. Returns true when it changed for the debt the user sees.
+ * R20: a card counts as paid off only once its installments are too; each installment keeps its own flag.
+ */
 export function syncPaidOff(db: Db, debtId: string, on: string): boolean {
-  const done = balanceOf(db, debtId) <= 0;
-  if (done === Boolean(getDebt(db, debtId)?.paidOffOn)) return false;
-  updateDebt(db, debtId, { paidOffOn: done ? on : null });
+  const ownerId = getDebt(db, debtId)?.parentDebtId ?? debtId;
+  const owner = getDebt(db, ownerId);
+  if (!owner) return false;
+  let familyDone = true;
+  for (const kid of childrenOf(listDebts(db), ownerId)) {
+    const done = balanceOf(db, kid.id) <= 0;
+    familyDone &&= done;
+    if (done !== Boolean(kid.paidOffOn)) updateDebt(db, kid.id, { paidOffOn: done ? on : null });
+  }
+  const done = familyDone && balanceOf(db, ownerId) <= 0;
+  if (done === Boolean(owner.paidOffOn)) return false;
+  updateDebt(db, ownerId, { paidOffOn: done ? on : null });
   return true;
 }
 

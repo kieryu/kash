@@ -25,7 +25,7 @@ declare const require: (path: string) => unknown;
 
 const banned = (name: string) => BANNED.some((re) => re.test(name));
 
-test('no analytics, crash reporting, OTA or backend SDKs in dependencies', () => {
+test('no analytics, crash reporting or backend SDKs in dependencies', () => {
   const direct = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies });
   expect(direct.filter(banned)).toEqual([]);
 });
@@ -37,7 +37,7 @@ test('no banned SDK pulled in transitively', () => {
   expect(all.filter(banned)).toEqual([]);
 });
 
-test('app config has no OTA updates, Firebase config or network plugins', () => {
+test('app config: code push pinned to Expo, no Firebase config or network plugins', () => {
   expect(config.updates).toBeUndefined();
   expect(config.android?.googleServicesFile).toBeUndefined();
   expect(config.ios?.googleServicesFile).toBeUndefined();
@@ -63,7 +63,7 @@ test('preview builds drop the INTERNET permission (D38)', () => {
   expect(config.android?.blockedPermissions).toBeUndefined();
 });
 
-test('the free "Pro (test)" switch is only in dev and preview builds', () => {
+test('tester tools are only in dev and preview builds', () => {
   const eas = require('../../../eas.json') as { build: Record<string, { env?: Record<string, string> }> };
   expect(eas.build.preview.env?.KASH_TESTER_TOOLS).toBe('1');
   expect(eas.build.production.env?.KASH_TESTER_TOOLS).toBeUndefined();

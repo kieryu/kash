@@ -15,7 +15,7 @@ module.exports = {
       preset: 'jest-expo',
       testEnvironment: 'node',
       transformIgnorePatterns,
-      testMatch: ['**/src/(engine|domain|theme|db|data|backup|notifications)/**/*.test.ts'],
+      testMatch: ['**/src/(engine|domain|theme|db|data|backup|notifications|billing)/**/*.test.ts'],
     },
     {
       // Anything touching React Native or Expo modules.
@@ -23,7 +23,9 @@ module.exports = {
       preset: 'jest-expo',
       transformIgnorePatterns,
       testMatch: ['**/src/**/*.test.{ts,tsx}'],
-      testPathIgnorePatterns: ['/node_modules/', '/src/(engine|domain|theme|db|data|backup|notifications)/'],
+      testPathIgnorePatterns: ['/node_modules/', '/src/(engine|domain|theme|db|data|backup|notifications|billing)/'],
+      // Reanimated 4 + worklets run their web (JS) builds under Jest.
+      resolver: 'react-native-reanimated/jest/resolver',
     },
   ],
 };

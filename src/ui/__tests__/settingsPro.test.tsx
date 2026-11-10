@@ -60,10 +60,10 @@ it('free plan: the 4th debt is read-only — logging it opens Kash Pro, the othe
   expect(screen.getByText('Log payment · Card 2')).toBeTruthy();
 });
 
-it('paywall: billing isn’t live yet, so Unlock says so and nothing changes', async () => {
+it('paywall: Google Play unreachable, so Unlock says so and nothing changes', async () => {
   await render(<Pro />);
   await fireEvent.press(await screen.findByRole('button', { name: 'Unlock for ₱99' }));
-  expect(await screen.findByText(/Purchases open when Kash launches/)).toBeTruthy();
+  expect(await screen.findByText(/Couldn't reach Google Play/)).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Maybe later' }));
   expect(router.back).toHaveBeenCalled();
 });

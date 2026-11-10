@@ -7,5 +7,5 @@ import app from './app.json';
 export const APP_NAME: string = app.name;
 export const APP_SLUG: string = app.slug;
 
-/** Dev and tester (preview) builds: Settings shows tester tools such as the "Pro (test)" switch. Never in production. */
+/** Dev and tester (preview) builds: Settings shows tester tools (encrypted database check). Never in production. */
 export const TESTER_TOOLS: boolean = __DEV__ || Constants.expoConfig?.extra?.testerTools === true;

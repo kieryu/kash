@@ -27,7 +27,8 @@ function dayIn(year: number, month: number, day: number): Date {
 export function planReminders(debts: DebtRow[], daysBefore: number, now: Date): Reminder[] {
   const out: Reminder[] = [];
   for (const d of debts) {
-    if (d.archivedAt || d.paidOffOn) continue;
+    // Installments on a card are paid with the card: its reminders cover them (R20).
+    if (d.archivedAt || d.paidOffOn || d.parentDebtId) continue;
     for (let i = 0; i < MONTHS_AHEAD; i++) {
       const y = now.getFullYear();
       const m = now.getMonth() + i;

@@ -5,13 +5,13 @@ import Svg, { Path } from 'react-native-svg';
 
 import { APP_NAME } from '@/config/app';
 import { getAppDb } from '@/db/client';
-import { listDebts } from '@/db/repositories/debts';
 import { getEntitlement } from '@/db/repositories/settings';
-import { balances } from '@/db/repositories/transactions';
 import type { DebtRow } from '@/db/schema';
 import { KIND_LABELS, templateById } from '@/domain/debtForm';
+import { loadSnapshot, shownBalance } from '@/domain/dashboard';
 import { formatMoney } from '@/domain/format';
-import { canAddDebt, FREE_DEBT_LIMIT } from '@/domain/plan';
+import { topLevel } from '@/domain/installments';
+import { canAddDebt, debtCount, FREE_DEBT_LIMIT } from '@/domain/plan';
 import { theme } from '@/theme';
 import { Button } from '@/ui/Button';
 import { DebtCard } from '@/ui/DebtCard';
@@ -25,8 +25,10 @@ export default function Debts() {
   useFocusEffect(
     useCallback(() => {
       getAppDb().then((db) => {
-        const rows = listDebts(db);
-        setData({ rows, balances: balances(db), canAdd: canAddDebt(rows.length, getEntitlement(db).isPro) });
+        // Cards show their own balance + this month's installments; installments aren't listed apart (R20).
+        const snap = loadSnapshot(db);
+        const rows = topLevel(snap.rows);
+        setData({ rows, balances: new Map(rows.map((r) => [r.id, shownBalance(snap, r.id)])), canAdd: canAddDebt(debtCount(snap.rows), getEntitlement(db).isPro) });
       });
     }, []),
   );

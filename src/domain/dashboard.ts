@@ -6,6 +6,7 @@ import { simulate, targetOrder, thisMonthPlan } from '@/engine/simulate';
 import type { DebtMonth, Minor, PlanResult, Shortfall, YearMonth } from '@/engine/types';
 
 import { currentYearMonth, formatMoney, formatYearMonth, monthsBetween, timeUntil } from './format';
+import { cardBalance, childrenOf, topLevel } from './installments';
 import { minimumsFloor, planInput, readOnlyIds } from './plan';
 
 // Dashboard and debt detail numbers, all derived from stored rows (D12).
@@ -89,6 +90,46 @@ export function monthPlan(s: Snapshot): MonthPlan {
 
 export function plannedAmount(line: DebtMonth): Minor {
   return line.paidMinimum + line.paidExtra;
+}
+
+export type MonthItem = {
+  debt: DebtRow;
+  /** Summed over the card and its installments (R20). */
+  line: Pick<DebtMonth, 'minimumDue' | 'paidMinimum' | 'paidExtra'>;
+  planned: Minor;
+  paid: Minor;
+};
+
+/** This month's payments as the user sees them: one item per card, its installments folded in (R20). */
+export function monthItems(s: Snapshot, plan: MonthPlan): MonthItem[] {
+  const byId = new Map(s.rows.map((r) => [r.id, r]));
+  const paid = paidInMonth(s.txs, s.month);
+  const out = new Map<string, MonthItem>();
+  for (const l of plan.lines) {
+    const row = byId.get(l.debtId);
+    const owner = row?.parentDebtId ? byId.get(row.parentDebtId) : row;
+    if (!owner) continue;
+    const item = out.get(owner.id) ?? { debt: owner, line: { minimumDue: 0, paidMinimum: 0, paidExtra: 0 }, planned: 0, paid: 0 };
+    item.line = {
+      minimumDue: item.line.minimumDue + l.minimumDue,
+      paidMinimum: item.line.paidMinimum + l.paidMinimum,
+      paidExtra: item.line.paidExtra + l.paidExtra,
+    };
+    item.planned += plannedAmount(l);
+    item.paid += paid.get(l.debtId)?.planned ?? 0;
+    out.set(owner.id, item);
+  }
+  return [...out.values()];
+}
+
+/** The card and its installments. */
+export function familyIds(rows: DebtRow[], id: string): string[] {
+  return [id, ...childrenOf(rows, id).map((r) => r.id)];
+}
+
+/** Balance shown on a debt's card: for a card with installments, its own balance + this month's installments. */
+export function shownBalance(s: Snapshot, id: string): Minor {
+  return cardBalance(s.rows, s, id);
 }
 
 /**
@@ -239,8 +280,16 @@ export function debtsList(s: Snapshot, today: string) {
   const bal = balancesOf(s.txs);
   const plan = monthPlan(s);
   const result = projection(s);
-  const payoff = (id: string) => (result.status === 'ok' ? result.perDebt[id]?.payoff : undefined);
-  const open = s.rows.filter((r) => (bal.get(r.id) ?? 0) > 0);
+  // A card with installments is paid off when the last of them is.
+  const payoff = (id: string) =>
+    result.status === 'ok'
+      ? familyIds(s.rows, id)
+          .map((f) => result.perDebt[f]?.payoff)
+          .filter(Boolean)
+          .sort()
+          .at(-1)
+      : undefined;
+  const open = topLevel(s.rows).filter((r) => familyIds(s.rows, r.id).some((f) => (bal.get(f) ?? 0) > 0));
   const rank = (r: DebtRow) => (r.id === plan.focusId ? '' : (payoff(r.id) ?? '9999-99'));
   const active: DebtsListItem[] = [...open]
     .sort((a, b) => rank(a).localeCompare(rank(b)) || a.sortOrder - b.sortOrder)
@@ -251,12 +300,13 @@ export function debtsList(s: Snapshot, today: string) {
         const c = countdown(today, payoffDate(month, debt.dueDay));
         payoffText = !c.inDays ? `Paid off around ${c.big}` : c.big === 'This month' ? 'Paid off this month' : `Paid off in ${c.big}`;
       }
-      return { debt, balance: bal.get(debt.id)!, isFocus: debt.id === plan.focusId, payoffText };
+      return { debt, balance: shownBalance(s, debt.id), isFocus: debt.id === plan.focusId, payoffText };
     });
   return {
     active,
-    paidOff: s.rows.filter((r) => !open.includes(r)),
-    totalLeft: active.reduce((sum, i) => sum + i.balance, 0),
+    paidOff: topLevel(s.rows).filter((r) => !open.includes(r)),
+    // Everything still owed, including installments not billed yet, so it matches the plan.
+    totalLeft: [...bal.values()].reduce((sum, b) => sum + Math.max(0, b), 0),
     minimums: plan.lines.reduce((sum, l) => sum + l.minimumDue, 0),
   };
 }
@@ -287,7 +337,7 @@ export function planMonths(result: PlanResult): PlanMonthRow[] {
 /** Numbers for the paid-off screen (design/proposals/paid-off.md), all from stored rows. */
 export function paidOffSummary(s: Snapshot, id: string, today: string) {
   const bal = balancesOf(s.txs);
-  const left = s.rows.filter((r) => (bal.get(r.id) ?? 0) > 0);
+  const left = topLevel(s.rows).filter((r) => familyIds(s.rows, r.id).some((f) => (bal.get(f) ?? 0) > 0));
   const plan = monthPlan(s);
   // This month's plan still lists the paid debt as focus; the extra moves to the next one.
   const nextId = plan.focusId === id ? plan.nextFocusId : plan.focusId;

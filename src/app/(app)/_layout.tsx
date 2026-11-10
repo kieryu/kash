@@ -2,6 +2,8 @@ import * as Notifications from 'expo-notifications';
 import { Redirect, router, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 
+import { syncPro } from '@/billing/billing';
+import { playStore } from '@/billing/playStore';
 import { getAppDb } from '@/db/client';
 import { getSettings } from '@/db/repositories/settings';
 import { reminderHref, rescheduleReminders } from '@/notifications/reminders';
@@ -18,6 +20,10 @@ export default function AppLayout() {
     if (!onboarded) return;
     getAppDb()
       .then((db) => rescheduleReminders(db))
+      .catch(() => {});
+    // Match Pro to Google Play (refunds, payments that cleared later). Offline → nothing changes.
+    getAppDb()
+      .then((db) => syncPro(db, playStore))
       .catch(() => {});
     // Tapping a reminder (cold start or while running). Lands under the lock screen when locked.
     const open = (r: Notifications.NotificationResponse | null) => {

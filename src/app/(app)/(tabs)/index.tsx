@@ -16,17 +16,18 @@ import {
   monthPlan,
   moneyText,
   movement,
+  monthItems,
   movementText,
   nextDueDate,
-  paidInMonth,
-  plannedAmount,
   progress,
   projection,
+  shownBalance,
   type LoadedSnapshot,
   type Snapshot,
 } from '@/domain/dashboard';
 import { formatYearMonth, today } from '@/domain/format';
 import { paidText, type SheetTarget } from '@/domain/payments';
+import { childrenOf, topLevel } from '@/domain/installments';
 import { FREE_DEBT_LIMIT } from '@/domain/plan';
 import { usePaymentSheet } from '@/state/usePaymentSheet';
 import { theme } from '@/theme';
@@ -68,9 +69,11 @@ export default function Dashboard() {
     mode,
     planned,
     minimum,
-    balance: Math.max(0, model.balances.get(d.id) ?? 0),
+    // R20: a planned payment covers this month's installments too; extra money goes to the card itself.
+    balance: mode === 'extra' ? Math.max(0, model.balances.get(d.id) ?? 0) : shownBalance(snap, d.id),
     hint,
     nextName: model.nextName(d.id),
+    hasInstallments: childrenOf(snap.rows, d.id).some((c) => (model.balances.get(c.id) ?? 0) > 0),
   });
 
   const focus = model.focus;
@@ -111,14 +114,17 @@ export default function Dashboard() {
                 {monthName(snap.month)} payments
               </Text>
               <Text style={styles.small}>
-                {model.paidCount} of {model.plan.lines.length} paid · {money(model.plannedTotal)}
+                {model.paidCount} of {model.itemCount} paid · {money(model.plannedTotal)}
               </Text>
             </View>
 
             {model.plan.shortfall ? (
               <Text style={styles.warn}>
                 Your minimums add up to {money(model.plan.shortfall.minimumsTotal)}, which is {money(model.plan.shortfall.shortBy)} more than
-                your monthly budget. Pay the minimums first to avoid late fees.
+                your monthly budget. Pay the minimums first to avoid late fees.{' '}
+                <Text accessibilityRole="link" style={styles.warnLink} onPress={() => router.push({ pathname: '/budget', params: { edit: '1' } })}>
+                  Change budget
+                </Text>
               </Text>
             ) : null}
 
@@ -202,13 +208,13 @@ export default function Dashboard() {
               </Pressable>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carousel}>
-              {snap.rows.map((d) => (
+              {topLevel(snap.rows).map((d) => (
                 <DebtCard
                   key={d.id}
                   variant="mini"
                   color={d.color}
                   nickname={d.nickname}
-                  balanceText={moneyText(Math.max(0, model.balances.get(d.id) ?? 0), d.currency, hide)}
+                  balanceText={moneyText(shownBalance(snap, d.id), d.currency, hide)}
                   progress={progress(snap.txs.filter((t) => t.debtId === d.id)).ratio}
                   onPress={() => router.push({ pathname: '/debt/[id]', params: { id: d.id } })}
                 />
@@ -235,14 +241,9 @@ type Model = ReturnType<typeof build>;
 
 function build(snap: Snapshot) {
   const plan = monthPlan(snap);
-  const paid = paidInMonth(snap.txs, snap.month);
   const byId = new Map(snap.rows.map((r) => [r.id, r]));
-  const items = plan.lines.map((line) => ({
-    debt: byId.get(line.debtId)!,
-    line,
-    planned: plannedAmount(line),
-    paid: paid.get(line.debtId)?.planned ?? 0,
-  }));
+  // A card's installments are folded into the card (R20).
+  const items = monthItems(snap, plan);
   const focus = items.find((i) => i.debt.id === plan.focusId) ?? null;
   const result = projection(snap);
   const move = movement(snap);
@@ -251,6 +252,7 @@ function build(snap: Snapshot) {
     focus,
     rows: items.filter((i) => i !== focus),
     paidCount: items.filter((i) => i.paid > 0).length,
+    itemCount: items.length,
     plannedTotal: items.reduce((s, i) => s + i.planned, 0),
     interest: plan.lines.reduce((s, l) => s + l.interest, 0),
     balances: balancesOf(snap.txs),

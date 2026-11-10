@@ -55,6 +55,9 @@ export const debts = sqliteTable('debts', {
   updatedAt: text('updated_at').notNull(),
   archivedAt: text('archived_at'),
   paidOffOn: text('paid_off_on'),
+  // R20: installment on a credit card = child of the card (null for every other debt).
+  parentDebtId: text('parent_debt_id'),
+  installmentTotal: integer('installment_total'),
 });
 
 export const transactions = sqliteTable('transactions', {

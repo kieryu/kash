@@ -11,7 +11,7 @@ This is a code and config review. It is **not** proof — the on-device capture 
 - `app.config.ts` has no `updates` block, no `googleServicesFile`, no network plugins. `expo-updates` is not installed (D9).
 - Android OS backup is off (`allowBackup: false`, D15).
 - EAS build profiles set `EXPO_NO_TELEMETRY=1` (stops Expo CLI telemetry on the build machine; nothing to do with the app on the phone).
-- The only planned network traffic is Google Play Billing at public launch (phone ↔ Google Play, done by the Play Store app; see §20).
+- The only network traffic is Google Play Billing (phone ↔ Google Play, done by the Play Store app; see §20 and D43).
 
 Guard: `src/config/__tests__/networkGuard.test.ts` fails `npm run check` if a known analytics / crash / OTA / Firebase / backend / RevenueCat SDK appears in `package.json` or `package-lock.json`, or if `app.config.ts` gains `updates`, a Firebase config file, or turns OS backup back on.
 
@@ -45,11 +45,14 @@ Guard: `src/config/__tests__/networkGuard.test.ts` fails `npm run check` if a kn
 
 Dev dependencies (`jest`, `eslint`, `typescript`, testing libs, `fast-check`, `@types/*`) never ship in the app.
 
-## Later: Google Play Billing (public launch)
+## Google Play Billing (`expo-iap`, D43)
 
-`src/billing/billing.ts` is a stub today. When `expo-iap` (or the current maintained Play Billing library) is added:
-- Traffic is phone ↔ Google Play only, for purchase and restore (§20). No RevenueCat or own server (guard test bans RevenueCat).
-- Re-run this audit and the capture after adding it, and check the library for its own telemetry.
+Added 2026-11-09: `expo-iap` 6.4.3 → native `io.github.hyochan.openiap:openiap-google` / `openiap-core` 4.0.10 → Google Play Billing 9.1.0. No JS dependencies of its own.
+- What we call (`src/billing/playStore.ts`): `initConnection`, `fetchProducts`, `requestPurchase`, `getAvailablePurchases`, `finishTransaction` (acknowledge), the purchase listeners. All go through the Play Store app on the phone.
+- What it also ships and we **never call**: `kitApi` / `verifyPurchaseWithProvider` (sends the purchase token to `kit.openiap.dev`), `verifyPurchase` (Google Android Publisher API, Meta Horizon), `verifyAppOwnership` (Play Integrity). Guarded by `src/billing/__tests__/billing.test.ts`.
+- Native AARs checked: no HTTP client, no analytics; the only URLs are the verification helpers above and Play deep links. Manifest adds `com.android.vending.BILLING` and `INTERNET` (production already has INTERNET, D33; preview still strips it, D38).
+- Pulls in `com.google.android.play:integrity` transitively. Unused unless `verifyAppOwnership` is called.
+- When a purchase or restore happens, the Play Store app talks to Google. That is the only traffic, and it's Google's, not ours.
 
 ## Still needs an on-device network capture
 

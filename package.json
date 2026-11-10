@@ -9,7 +9,8 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "check": "npm run typecheck && npm run lint && npm test"
+    "check": "npm run typecheck && npm run lint && npm test",
+    "deploy-build": "npm run check && eas build --profile production --platform android --auto-submit"
   },
   "dependencies": {
     "@expo-google-fonts/dm-sans": "^0.4.2",
@@ -25,6 +26,7 @@
     "expo-file-system": "~58.0.11",
     "expo-font": "~58.0.9",
     "expo-haptics": "~58.0.7",
+    "expo-iap": "^6.4.3",
     "expo-linking": "~58.0.13",
     "expo-local-authentication": "~58.0.2",
     "expo-notifications": "~58.1.6",

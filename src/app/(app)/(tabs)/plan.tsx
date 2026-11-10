@@ -7,6 +7,7 @@ import { getAppDb } from '@/db/client';
 import { STRATEGY_NAMES } from '@/domain/compare';
 import { countdown, debtFreeDate, debtsList, loadSnapshot, moneyText, plannedAmount, planMonths, projection, type LoadedSnapshot } from '@/domain/dashboard';
 import { formatYearMonth, today } from '@/domain/format';
+import { displayName } from '@/domain/installments';
 import { theme } from '@/theme';
 import { ChevronIcon } from '@/ui/icons';
 
@@ -32,7 +33,6 @@ export default function Plan() {
   const { result, list, months } = model;
   const hide = snap.settings.hideBalances;
   const money = (n: number) => moneyText(n, snap.settings.homeCurrency, hide);
-  const names = new Map(snap.rows.map((r) => [r.id, r]));
   const shown = all ? months : months.slice(0, FIRST_MONTHS);
   const toggle = (m: string) => {
     const next = new Set(open);
@@ -125,7 +125,7 @@ export default function Plan() {
                           .filter((l) => l.opening > 0)
                           .map((l) => (
                             <View key={l.debtId} style={styles.line} accessible>
-                              <Text style={styles.label}>{names.get(l.debtId)?.nickname}</Text>
+                              <Text style={styles.label}>{displayName(snap.rows, l.debtId)}</Text>
                               <Text style={styles.caption}>
                                 Pay {money(plannedAmount(l))} · interest {money(l.interest)} · ends at {money(l.closing)}
                               </Text>

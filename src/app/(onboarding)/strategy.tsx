@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
+import { useEffect, useState } from 'react';
+import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import Svg, { Circle, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 import { APP_NAME } from '@/config/app';
@@ -11,7 +12,7 @@ import type { Settings } from '@/db/schema';
 import { fontFamily, theme } from '@/theme';
 import { Button } from '@/ui/Button';
 import { OnboardingScreen } from '@/ui/Onboarding';
-import { PageDots, StrategyCard } from '@/ui/StrategyCard';
+import { listTransition, StrategyCard } from '@/ui/StrategyCard';
 
 type Id = Settings['strategy'] | 'cost' | 'hybrid';
 
@@ -28,24 +29,22 @@ const CARDS: { id: Id; name: string; how: string; best: string; pro?: boolean }[
 const SAMPLE = {
   shop: { title: 'Shopping card', detail: '₱5,000 at 2%/mo' },
   main: { title: 'Main card', detail: '₱20,000 at 3.5%/mo' },
-  phone: { title: 'Phone loan', detail: '₱12,000 at 1%/mo' },
+  family: { title: 'Family loan', detail: '₱12,000 at 1%/mo' },
 };
 const EXAMPLES: Record<Id, (keyof typeof SAMPLE)[]> = {
-  snowball: ['shop', 'phone', 'main'], // smallest balance first
-  avalanche: ['main', 'shop', 'phone'], // highest rate first
-  custom: ['phone', 'main', 'shop'], // e.g. the phone loan first, for your own reasons
-  cost: ['main', 'phone', 'shop'], // ₱700, ₱120, ₱100 of interest a month
-  hybrid: ['shop', 'main', 'phone'], // one quick win, then highest rate
+  snowball: ['shop', 'family', 'main'], // smallest balance first
+  avalanche: ['main', 'shop', 'family'], // highest rate first
+  custom: ['family', 'main', 'shop'], // the family loan first, as the card's wording says
+  cost: ['main', 'family', 'shop'], // ₱700, ₱120, ₱100 of interest a month
+  hybrid: ['shop', 'main', 'family'], // one quick win, then highest rate
 };
 
-const PAGE = theme.size.strategyCardWidth + 14;
-
-// 04 Choose a strategy. "Help me choose" opens the 04a quiz, which comes back with `recommended`.
+// 04 Choose a strategy (R14: vertical list, details in an accordion per card). "Help me choose" opens the 04a quiz, which comes back with `recommended`.
 export default function Strategy() {
   const { recommended } = useLocalSearchParams<{ recommended?: StrategyKey }>();
   const [picked, setPicked] = useState<Id>('snowball');
-  const [page, setPage] = useState(0);
-  const carousel = useRef<ScrollViewInstance>(null);
+  // One example open at a time: opening another closes the first.
+  const [expanded, setExpanded] = useState<Id | null>(null);
   // Quiz result: select it as soon as it arrives (state adjusted during render, not in an effect).
   const [seen, setSeen] = useState(recommended);
   if (recommended !== seen) {
@@ -63,14 +62,13 @@ export default function Strategy() {
   }, []);
 
   useEffect(() => {
-    const i = CARDS.findIndex((c) => c.id === recommended);
-    if (!recommended || i < 0) return;
-    carousel.current?.scrollTo({ x: i * PAGE, animated: true });
+    if (!recommended || !STRATEGY_NAMES[recommended]) return;
     AccessibilityInfo.announceForAccessibility(`Recommended: ${STRATEGY_NAMES[recommended]}`);
   }, [recommended]);
 
-  const use = async () => {
-    if (card.pro) return;
+  // R14: one label whatever is picked. A Pro strategy isn't built yet, so Continue opens the paywall.
+  const next = async () => {
+    if (card.pro) return router.push('/pro');
     updateSettings(await getAppDb(), { strategy: card.id as Settings['strategy'] });
     router.push('/debts');
   };
@@ -78,31 +76,17 @@ export default function Strategy() {
   return (
     <OnboardingScreen
       step={3}
-      fullBleed
       title="How do you want to pay it off?"
-      body="Swipe to compare, tap to choose. You can switch anytime."
+      body="Tap to choose. You can switch anytime."
       footer={
         <>
           {card.pro ? <Text style={styles.note}>{card.name} comes with {APP_NAME} Pro in a later update. Snowball, Avalanche and My own order are free.</Text> : null}
-          {card.pro ? (
-            <Button variant="secondary" label={`See ${APP_NAME} Pro`} onPress={() => router.push('/pro')} />
-          ) : (
-            <Button label={`Use ${card.name}`} onPress={use} />
-          )}
+          <Button label="Continue" onPress={next} />
           <Button variant="link" label="Have a backup? Restore it" onPress={() => router.push('/backup/import')} />
         </>
       }
     >
-      <ScrollView
-        ref={carousel}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        snapToInterval={PAGE}
-        decelerationRate="fast"
-        contentContainerStyle={styles.carousel}
-        onScroll={(e) => setPage(Math.round(e.nativeEvent.contentOffset.x / PAGE))}
-        scrollEventThrottle={64}
-      >
+      <View accessibilityRole="radiogroup" style={styles.list}>
         {CARDS.map((c) => (
           <StrategyCard
             key={c.id}
@@ -115,13 +99,14 @@ export default function Strategy() {
             art={<Art id={c.id} />}
             example={EXAMPLES[c.id].map((k) => SAMPLE[k])}
             onPress={() => setPicked(c.id)}
+            open={expanded === c.id}
+            onToggle={() => setExpanded(expanded === c.id ? null : c.id)}
           />
         ))}
-      </ScrollView>
-      <PageDots count={CARDS.length} index={page} />
-      <View style={styles.help}>
-        <Button variant="link" label="Not sure? Help me choose" onPress={() => router.push('/quiz')} />
       </View>
+      <Animated.View layout={listTransition} style={styles.help}>
+        <Button variant="link" label="Not sure? Help me choose" onPress={() => router.push('/quiz')} />
+      </Animated.View>
     </OnboardingScreen>
   );
 }
@@ -145,10 +130,11 @@ function Art({ id }: { id: Id }) {
       )}
       {id === 'avalanche' && (
         <>
-          <Path d="M10 10 L70 40 L120 62 L180 88 L10 88 Z" fill={w} stroke={g} strokeWidth={3} strokeLinejoin="round" />
-          <SvgText x={26} y={34} fontSize={16} {...label}>36%</SvgText>
-          <SvgText x={80} y={76} fontSize={13} {...label}>24%</SvgText>
-          <SvgText x={138} y={84} fontSize={11} {...label}>0%</SvgText>
+          {/* One straight slope; labels the same size, evenly spaced and the same distance under it. Rates match the sample debts. */}
+          <Path d="M10 8 L182 88 L10 88 Z" fill={w} stroke={g} strokeWidth={3} strokeLinejoin="round" />
+          <SvgText x={40} y={41} fontSize={13} textAnchor="middle" {...label}>3.5%</SvgText>
+          <SvgText x={85} y={62} fontSize={13} textAnchor="middle" {...label}>2%</SvgText>
+          <SvgText x={130} y={83} fontSize={13} textAnchor="middle" {...label}>1%</SvgText>
         </>
       )}
       {id === 'custom' && (
@@ -180,7 +166,7 @@ function Art({ id }: { id: Id }) {
 const { colors, space, type } = theme;
 
 const styles = StyleSheet.create({
-  carousel: { gap: 14, paddingHorizontal: space.screenOnboarding, paddingVertical: space.xs },
-  help: { paddingHorizontal: space.screenOnboarding, alignItems: 'flex-start' },
+  list: { gap: space.md },
+  help: { alignItems: 'flex-start', marginTop: -space.md },
   note: { ...type.small, color: colors.muted, textAlign: 'center' },
 });

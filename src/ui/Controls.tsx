@@ -1,5 +1,7 @@
+import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
+import { amountEdit } from '@/domain/format';
 import { theme } from '@/theme';
 
 type SwitchProps = { value: boolean; onValueChange: (next: boolean) => void; accessibilityLabel: string; disabled?: boolean };
@@ -79,16 +81,68 @@ export function ProgressBar({ value, tone, accessibilityLabel }: ProgressProps) 
   );
 }
 
-type FieldProps = TextInputProps & { label: string };
+type FieldProps = TextInputProps & { label: string; /** Shown inside the box on the left, e.g. "₱". */ prefix?: string };
 
 /** Labelled text input (label 13/700 above a 48px box). */
-export function TextField({ label, style, ...input }: FieldProps) {
+export function TextField({ label, prefix, style, ...input }: FieldProps) {
+  const field = (
+    <TextInput accessibilityLabel={label} placeholderTextColor={colors.muted} style={prefix ? [styles.prefixed, style] : [styles.input, style]} {...input} />
+  );
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput accessibilityLabel={label} placeholderTextColor={colors.muted} style={[styles.input, style]} {...input} />
+      {prefix ? (
+        <View style={[styles.input, styles.prefixRow]}>
+          <Text style={styles.prefix} importantForAccessibility="no" accessibilityElementsHidden>
+            {prefix}
+          </Text>
+          {field}
+        </View>
+      ) : (
+        field
+      )}
     </View>
   );
+}
+
+/**
+ * Typing props for an amount input (R19): thousands commas while typing, and the cursor stays next to
+ * the digit just typed when commas shift. Selection events from the same keystroke are pinned to that
+ * spot, whichever order the platform sends them in.
+ */
+export function useMoneyInput(value: string, currency: string, onChangeText: (text: string) => void) {
+  const [sel, setSel] = useState<{ start: number; end: number }>();
+  const pinned = useRef<number | null>(null);
+  const clamp = (n: number) => Math.min(n, value.length);
+  return {
+    value,
+    keyboardType: 'decimal-pad' as const,
+    selection: sel && { start: clamp(sel.start), end: clamp(sel.end) },
+    onSelectionChange: (e: { nativeEvent: { selection: { start: number; end: number } } }) => {
+      const p = pinned.current;
+      setSel(p === null ? e.nativeEvent.selection : { start: p, end: p });
+    },
+    onChangeText: (raw: string) => {
+      const { text, caret } = amountEdit(value, raw, currency);
+      pinned.current = caret;
+      setSel({ start: caret, end: caret });
+      requestAnimationFrame(() => {
+        pinned.current = null;
+      });
+      onChangeText(text);
+    },
+  };
+}
+
+type MoneyFieldProps = Omit<FieldProps, 'value' | 'onChangeText' | 'selection' | 'onSelectionChange'> & {
+  value: string;
+  currency: string;
+  onChangeText: (text: string) => void;
+};
+
+/** Labelled amount input with the currency sign as `prefix` (R19). */
+export function MoneyField({ value, currency, onChangeText, ...field }: MoneyFieldProps) {
+  return <TextField {...field} {...useMoneyInput(value, currency, onChangeText)} />;
 }
 
 const { colors, radius, size, type } = theme;
@@ -129,4 +183,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
     backgroundColor: colors.surface,
   },
+  prefixRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  prefix: { ...type.input, color: colors.muted },
+  prefixed: { ...type.input, flex: 1, minHeight: size.input - 2 * size.border, padding: 0, color: colors.ink },
 });

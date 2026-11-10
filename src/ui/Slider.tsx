@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View, type GestureResponderEvent } from 'react-native';
 
 import { theme } from '@/theme';
@@ -12,10 +12,14 @@ type Props = {
   accessibilityLabel: string;
   /** Spoken value, e.g. "₱10,000". */
   valueText: string;
+  /** Replaces the default green track, e.g. a color gradient. Drawn full width behind the thumb. */
+  track?: ReactNode;
+  /** Thumb fill (default white), e.g. the picked color. */
+  thumbColor?: string;
 };
 
 /** Horizontal slider on plain RN touch events (no native module). Snaps to multiples of `step`. */
-export function Slider({ value, min, max, step, onChange, accessibilityLabel, valueText }: Props) {
+export function Slider({ value, min, max, step, onChange, accessibilityLabel, valueText, track, thumbColor }: Props) {
   const [width, setWidth] = useState(0);
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
   const ratio = max > min ? (clamp(value) - min) / (max - min) : 0;
@@ -42,10 +46,19 @@ export function Slider({ value, min, max, step, onChange, accessibilityLabel, va
       onResponderMove={move}
       style={styles.hit}
     >
-      <View pointerEvents="none" style={styles.track}>
-        <View style={[styles.fill, { width: `${ratio * 100}%` }]} />
-      </View>
-      <View pointerEvents="none" style={[styles.thumb, { left: ratio * Math.max(0, width - THUMB) }]} />
+      {track ? (
+        <View pointerEvents="none" style={styles.customTrack}>
+          {track}
+        </View>
+      ) : (
+        <View pointerEvents="none" style={styles.track}>
+          <View style={[styles.fill, { width: `${ratio * 100}%` }]} />
+        </View>
+      )}
+      <View
+        pointerEvents="none"
+        style={[styles.thumb, thumbColor ? { backgroundColor: thumbColor, borderColor: colors.surface } : null, { left: ratio * Math.max(0, width - THUMB) }]}
+      />
     </View>
   );
 }
@@ -57,6 +70,7 @@ const styles = StyleSheet.create({
   hit: { height: size.hitTarget, justifyContent: 'center' },
   track: { height: 6, borderRadius: radius.pill, backgroundColor: colors.segmentBg, overflow: 'hidden', marginHorizontal: THUMB / 2 },
   fill: { height: '100%', backgroundColor: colors.primary },
+  customTrack: { height: 14, borderRadius: radius.pill, overflow: 'hidden', marginHorizontal: THUMB / 2 },
   thumb: {
     position: 'absolute',
     width: THUMB,

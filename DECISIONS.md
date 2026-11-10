@@ -162,7 +162,7 @@ It opens only from a user tap on something Pro, so no weekly "last shown" counte
 - Large fonts: everything grows with the system font except PinPad digits (capped at 1.5×, fixed 72px keys) and debt-type segment labels (shrink to fit).
 - Reduce motion: the payment sheet doesn't animate; native screen transitions follow the OS setting.
 - Privacy policy hosted as a static page (GitHub Pages) from `docs/privacy-policy.md`.
-- Strip Android `INTERNET`: done for preview builds (D38). Production still open: needs a device check that Play Billing works without it (it talks to the Play Store app), so decide when billing is added.
+- Strip Android `INTERNET`: done for preview builds (D38). Production keeps it: expo-iap's manifest requests it for Play Billing (D43).
 
 ### D34. Debts tab and edit/archive/delete (2026-10-26, approved proposals)
 - Installment edit shows Monthly payment and Payments left; changing either appends a `correction` row for the new balance (payment × months). History is never edited (D18).
@@ -205,6 +205,32 @@ Icon, adaptive foreground and splash mascot come from `assets/kash-icons` option
 `eas.json` preview sets `KASH_TESTER_TOOLS=1` → `extra.testerTools` → `TESTER_TOOLS` (`src/config/app.ts`). Settings then shows "Tester tools": a free "Pro (test)" switch and the encrypted-DB check. Dev builds always show it; production never (guarded by `networkGuard.test.ts`).
 **Why:** billing is still a stub (D37), so testers on APK/Firebase builds had no way to try Pro. On Play, license testers will test real purchases instead.
 **Trade-off:** anyone with a preview APK gets Pro free. Fine for invited testers; never ship a preview APK publicly.
+**Update 2026-11-09 (D43):** the "Pro (test)" switch is removed. Testers get Pro through Play license testing (test cards, no charge). Tester tools keep only the encrypted-database check. Leftover test Pro is cleared at launch once Play says the account doesn't own it.
+
+### D42. Keyboard handling without a new library (2026-11-05, R12)
+One wrapper, `src/ui/Keyboard.tsx`: React Native's `KeyboardAvoidingView` with `behavior="padding"` on both platforms. Android apps are edge-to-edge since SDK 54, so the window no longer shrinks for the keyboard and the old Android setting (`undefined`) left fields hidden.
+**Why:** no native dependency, no new build needed. **Trade-off:** `react-native-keyboard-controller` handles more cases (smooth animation, auto-scroll to the focused field) but needs a config plugin and a new dev build. Switch to it only if device testing shows gaps.
+
+### D43. Google Play Billing with expo-iap (2026-11-09)
+`expo-iap` (6.4.3, config plugin, needs a new build) for the one-time `pro_unlock`. `src/billing/billing.ts` holds the rules behind a small `Store` interface (tested with fakes); `src/billing/playStore.ts` is the only file that talks to Play.
+- Buy: Play purchase sheet → on "purchased" acknowledge (Play refunds unacknowledged purchases after 3 days) → unlock. "Pending" (cash/slow payments, common in PH) doesn't unlock until Play confirms.
+- Restore and every launch: `getAvailablePurchases`. Owned → Pro. None → Pro removed only if it came from Play (refund); data stays, extra debts turn read-only. Offline/Play error → nothing changes. Testers buy with Play test cards (license testing); there is no free switch any more (D41 update).
+- Price on the paywall comes from Play (local currency); ₱99 is the fallback.
+- No server verification: expo-iap's IAPKit/Publisher/Integrity helpers send data off the phone and are banned by a test.
+**Why:** the brief (§20) wants on-device Play verification and no purchase server. expo-iap is the maintained Expo module for Play Billing (react-native-iap's sibling, same author); checked for telemetry (docs/network-audit.md).
+**Trade-off:** no server check means a rooted phone can fake Pro. Acceptable for a ₱99 unlock with no server to protect. Production keeps INTERNET (D33): Play Billing needs it.
+
+### D44. Installments running on a credit card (2026-11-10, R20)
+An installment on a card ("INST 03/10 ₱2,000" on the statement) is a **child debt** of the card: new columns `parent_debt_id` (cascade delete) and `installment_total` (schema v3; backups from v2 upgrade with nulls). The child is baked-in, `acceptsExtra: false`, and follows the card's color, issuer and due day.
+- **Input:** "Is there an ongoing installment on this card?" → per installment: optional name, monthly amount, "Statement shows __ out of __". Then the **statement total**, which already includes this month's installments. Card's own balance = total − installments on this statement. "0 out of N" = new, not billed yet (nothing subtracted).
+- **What's left** = amount × payments not yet paid, this statement's included ("3 of 10" → 8). The payment number is derived from the balance at the start of the month, never stored.
+- **Shown:** the card's balance = its own balance + this month's unpaid installments (what the bank shows). The unbilled remainder is never shown on its own; the card lists "Phone · ₱2,000/mo · 3 of 10". Totals (dashboard "left", Debts tab "Total left") include everything owed so they match the debt-free date.
+- **Plan:** the engine is unchanged; it sees the card and each installment as debts. Strategies rank the card by its own balance; installments never get extra money. Dashboard folds them into one "This month" item per card.
+- **Payments:** a planned payment to the card pays this month's installments first, then the card (estimate; banks allocate their own way). Extra money goes to the card. Undo reverses all parts. The card is paid off only when its installments are.
+- **Check-in:** the user types the statement total; the app subtracts this month's installments before comparing.
+- **Free plan:** installments don't count toward the 3-debt limit and follow their card's read-only state. Reminders come from the card only.
+- **Edit:** changing "X of Y" or the amount writes a correction row; a removed installment is archived (history kept); a new one already on the statement comes out of the card's balance.
+**Why:** reusing debts keeps history, the engine and backups working with no engine change. **Trade-off:** dashboard totals include unbilled installments while each card shows the statement view, so the cards don't add up to the total. Accurate plan over matching numbers.
 
 ## Costs
 No paid services so far. See brief §19.

@@ -45,6 +45,8 @@ Feature walkthrough on a dev build first: `docs/device-checks.md`.
 
 ## 4. Google Play: internal → closed → production
 
+Step-by-step checklist for the Play Console account: `docs/play-console.md`.
+
 Production builds are app bundles: `eas build --profile production --platform android` (auto-increments the version code).
 
 1. Create the app in Play Console, fill **App content**: privacy policy URL (`docs/privacy-policy.md` hosted), Data safety (`docs/play-data-safety.md`), ads = no, target audience 18+, financial features.

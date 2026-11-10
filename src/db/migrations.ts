@@ -100,6 +100,13 @@ export const MIGRATIONS: string[][] = [
       BEFORE UPDATE OF id, debt_id, type, amount_minor, occurred_on, plan_month, is_extra, reverses_id, note, created_at ON transactions
       BEGIN SELECT RAISE(ABORT, 'transactions are append-only'); END`,
   ],
+  [
+    // v3 (R20, D44): an installment running on a credit card is a child debt of that card.
+    // installment_total = the "of 10" on the statement; the payment number is derived from the balance.
+    `ALTER TABLE debts ADD COLUMN parent_debt_id TEXT REFERENCES debts(id) ON DELETE CASCADE`,
+    `ALTER TABLE debts ADD COLUMN installment_total INTEGER CHECK (installment_total IS NULL OR (typeof(installment_total) = 'integer' AND installment_total BETWEEN 1 AND 600))`,
+    `CREATE INDEX debts_parent ON debts(parent_debt_id)`,
+  ],
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

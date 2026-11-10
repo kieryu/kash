@@ -11,7 +11,8 @@ import type { DebtRow } from '@/db/schema';
 import { debtsList, loadSnapshot, moneyText, paidOffText, type LoadedSnapshot } from '@/domain/dashboard';
 import { KIND_LABELS, templateById } from '@/domain/debtForm';
 import { today } from '@/domain/format';
-import { canAddDebt, FREE_DEBT_LIMIT } from '@/domain/plan';
+import { topLevel } from '@/domain/installments';
+import { canAddDebt, debtCount, FREE_DEBT_LIMIT } from '@/domain/plan';
 import { theme } from '@/theme';
 import { Button } from '@/ui/Button';
 import { DebtCard } from '@/ui/DebtCard';
@@ -33,8 +34,8 @@ export default function Wallet() {
         const snap = loadSnapshot(db);
         setData({
           snap,
-          archived: listDebts(db, { includeArchived: true }).filter((r) => r.archivedAt),
-          canAdd: canAddDebt(snap.rows.length, getEntitlement(db).isPro),
+          archived: topLevel(listDebts(db, { includeArchived: true })).filter((r) => r.archivedAt),
+          canAdd: canAddDebt(debtCount(snap.rows), getEntitlement(db).isPro),
         });
       });
     }, []),

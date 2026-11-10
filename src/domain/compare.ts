@@ -3,6 +3,7 @@ import type { Minor, YearMonth } from '@/engine/types';
 
 import { budgetOf, monthPlan, projection, type Snapshot } from './dashboard';
 import { monthsBetween } from './format';
+import { displayName } from './installments';
 
 // 11 Compare strategies: the same snapshot and budget under each free strategy.
 
@@ -35,7 +36,7 @@ export function breakdown(s: Snapshot, strategy: StrategyKey): Breakdown | null 
   const snap = { ...s, settings: { ...s.settings, strategy } };
   const r = projection(snap);
   if (r.status !== 'ok') return null;
-  const name = (id: string) => s.rows.find((d) => d.id === id)?.nickname ?? '';
+  const name = (id: string) => displayName(s.rows, id);
   const order = Object.entries(r.perDebt)
     .filter(([, d]) => d.paid > 0)
     .map(([id, d]) => ({ id, name: name(id), payoff: d.payoff, interest: d.interest }))

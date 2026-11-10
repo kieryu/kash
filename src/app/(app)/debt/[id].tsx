@@ -5,29 +5,33 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { APP_NAME } from '@/config/app';
 import { getAppDb } from '@/db/client';
-import { getDebt, listDebts, updateDebt } from '@/db/repositories/debts';
+import { getDebt, listDebts } from '@/db/repositories/debts';
 import { getEntitlement } from '@/db/repositories/settings';
 import { balanceOf } from '@/db/repositories/transactions';
 import type { DebtRow, TransactionRow } from '@/db/schema';
 import {
   countdown,
+  familyIds,
   loadSnapshot,
+  monthItems,
   monthPlan,
   moneyText,
-  paidInMonth,
   payoffDate,
-  plannedAmount,
   progress,
   projection,
   shortDate,
+  shownBalance,
   type LoadedSnapshot,
   type Snapshot,
 } from '@/domain/dashboard';
 import { KIND_LABELS, templateById } from '@/domain/debtForm';
 import { annualFromMonthly, formatPercent, today } from '@/domain/format';
-import { canAddDebt } from '@/domain/plan';
+import { billedUnpaid, childrenOf, installmentNumber, setFamilyArchived } from '@/domain/installments';
+import { canAddDebt, debtCount } from '@/domain/plan';
+import { canLogPurchase } from '@/domain/purchase';
 import { rescheduleReminders } from '@/notifications/reminders';
 import { usePaymentSheet } from '@/state/usePaymentSheet';
+import { usePurchaseSheet } from '@/state/usePurchaseSheet';
 import { theme } from '@/theme';
 import { Button, IconButton } from '@/ui/Button';
 import { ProgressBar } from '@/ui/Controls';
@@ -52,6 +56,7 @@ export default function DebtDetail() {
 
   const hide = snap?.settings.hideBalances ?? false;
   const payments = usePaymentSheet(refresh, hide);
+  const purchases = usePurchaseSheet(snap, refresh);
   const model = useMemo(() => (snap ? build(snap, id) : null), [snap, id]);
 
   if (!snap) return null;
@@ -80,6 +85,7 @@ export default function DebtDetail() {
       balance: model.balance,
       hint: model.plannedLeft > 0 ? `Planned this month ${money(model.plannedLeft)}` : 'Nothing more planned this month',
       nextName: null,
+      hasInstallments: model.installments.some((i) => !i.done),
     });
 
   return (
@@ -120,9 +126,27 @@ export default function DebtDetail() {
         <View style={styles.grid}>
           <Stat label="Interest" value={`${formatPercent(debt.monthlyRate)} / mo · ${formatPercent(annualFromMonthly(debt.monthlyRate))} / yr`} />
           <Stat label={debt.amortizationMinor != null ? 'Monthly payment' : 'Minimum'} value={minimumText(debt, money)} />
-          <Stat label="Statement day" value={ordinal(debt.statementDay)} />
+          {debt.statementDay ? <Stat label="Statement day" value={ordinal(debt.statementDay)} /> : null}
           <Stat label="Due day" value={ordinal(debt.dueDay)} />
         </View>
+
+        {model.installments.length > 0 ? (
+          <View style={styles.card}>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>
+              Installments on this card
+            </Text>
+            {model.installments.map((i) => (
+              <View key={i.id} style={styles.historyRow} accessible>
+                <View style={styles.historyText}>
+                  <Text style={styles.historyLabel}>{i.name}</Text>
+                  <Text style={styles.caption}>{i.done ? 'All paid' : `${i.n} of ${i.total}${i.paidThisMonth ? ' · paid this month' : ''}`}</Text>
+                </View>
+                <Text style={styles.amount}>{money(i.amount)}/mo</Text>
+              </View>
+            ))}
+            <Text style={styles.caption}>Included in this card’s balance and monthly payment. To change them, tap Edit.</Text>
+          </View>
+        ) : null}
 
         {snap.readOnly.has(debt.id) ? (
           <View style={styles.readOnly}>
@@ -130,15 +154,18 @@ export default function DebtDetail() {
             <Button variant="secondary" label={`See ${APP_NAME} Pro`} onPress={() => router.push('/pro')} />
           </View>
         ) : (
-          <View style={styles.actions}>
-            {model.balance > 0 ? (
+          <View style={styles.readOnly}>
+            <View style={styles.actions}>
+              {model.balance > 0 ? (
+                <View style={styles.action}>
+                  <Button label="Log a payment" onPress={logPayment} />
+                </View>
+              ) : null}
               <View style={styles.action}>
-                <Button label="Log a payment" onPress={logPayment} />
+                <Button variant="secondary" label="Update balance" onPress={() => router.push({ pathname: '/check-in/[id]', params: { id: debt.id } })} />
               </View>
-            ) : null}
-            <View style={styles.action}>
-              <Button variant="secondary" label="Update balance" onPress={() => router.push({ pathname: '/check-in/[id]', params: { id: debt.id } })} />
             </View>
+            {canLogPurchase(debt) ? <Button variant="link" label="Used this card again? Log a purchase" onPress={() => purchases.open(debt)} /> : null}
           </View>
         )}
 
@@ -149,7 +176,10 @@ export default function DebtDetail() {
           {txs.map((t) => (
             <View key={t.id} style={styles.historyRow} accessible>
               <View style={styles.historyText}>
-                <Text style={styles.historyLabel}>{historyLabel(t, txs)}</Text>
+                <Text style={styles.historyLabel}>
+                  {historyLabel(t, txs)}
+                  {model.names.has(t.debtId) ? ` · ${model.names.get(t.debtId)}` : ''}
+                </Text>
                 <Text style={styles.caption}>{shortDate(t.occurredOn)}</Text>
               </View>
               <Text style={[styles.amount, t.type !== 'opening' && (t.amountMinor < 0 ? styles.down : styles.up)]}>
@@ -167,6 +197,7 @@ export default function DebtDetail() {
         </Text>
       </ScrollView>
       {payments.sheet}
+      {purchases.sheet}
     </SafeAreaView>
   );
 }
@@ -174,19 +205,43 @@ export default function DebtDetail() {
 function build(snap: Snapshot, id: string) {
   const debt = snap.rows.find((r) => r.id === id);
   if (!debt) return null;
-  const txs = snap.txs.filter((t) => t.debtId === id);
-  const p = progress(txs);
+  // R20: a card's installments are part of it. Their payments show in its history; their opening and
+  // corrections don't (that would show the unbilled remainder).
+  const family = familyIds(snap.rows, id);
+  const kids = childrenOf(snap.rows, id);
+  const names = new Map(kids.map((k) => [k.id, k.nickname]));
+  const txs = snap.txs.filter((t) => t.debtId === id || (names.has(t.debtId) && t.type !== 'opening' && t.type !== 'correction'));
+  const p = progress(snap.txs.filter((t) => t.debtId === id));
   const plan = monthPlan(snap);
-  const line = plan.lines.find((l) => l.debtId === id);
-  const paid = paidInMonth(snap.txs, snap.month).get(id)?.planned ?? 0;
+  const item = monthItems(snap, plan).find((i) => i.debt.id === id);
+  const paid = item?.paid ?? 0;
   const result = projection(snap);
   const isFocus = plan.focusId === id;
+  const familyPayoff =
+    result.status === 'ok'
+      ? family
+          .map((f) => result.perDebt[f]?.payoff)
+          .filter(Boolean)
+          .sort()
+          .at(-1)
+      : undefined;
+  const familyLeft = family.some((f) => progress(snap.txs.filter((t) => t.debtId === f)).remaining > 0);
+  const installments = kids.map((k) => {
+    const num = installmentNumber(k, snap);
+    return {
+      id: k.id,
+      name: k.nickname,
+      amount: k.amortizationMinor ?? 0,
+      ...num,
+      paidThisMonth: !num.done && billedUnpaid(k, snap) === 0,
+    };
+  });
 
   let payoff: ReturnType<typeof countdown> | null = null;
   let payoffText = 'At this budget there’s no payoff date yet. A higher monthly amount fixes that.';
-  if (p.remaining === 0) payoffText = 'Nice work — this one’s done.';
-  else if (result.status === 'ok' && result.perDebt[id]) {
-    payoff = countdown(today(), payoffDate(result.perDebt[id].payoff, debt.dueDay));
+  if (!familyLeft) payoffText = 'Nice work — this one’s done.';
+  else if (familyPayoff) {
+    payoff = countdown(today(), payoffDate(familyPayoff, debt.dueDay));
     payoffText = payoff.inDays
       ? `until ${debt.nickname} is paid off — ${payoff.sub}.`
       : `${debt.nickname} paid off ${payoff.sub}.`;
@@ -197,12 +252,15 @@ function build(snap: Snapshot, id: string) {
     debt,
     // Newest first, as listTransactions returns them.
     txs,
+    names,
+    installments,
     progress: p,
-    balance: p.remaining,
+    // Cards with installments: own balance + this month's installments, like the bank shows it.
+    balance: shownBalance(snap, id),
     payoff,
     payoffText,
-    plannedLeft: Math.max(0, (line ? plannedAmount(line) : 0) - paid),
-    minimumLeft: Math.max(0, (line?.minimumDue ?? 0) - paid),
+    plannedLeft: Math.max(0, (item?.planned ?? 0) - paid),
+    minimumLeft: Math.max(0, (item?.line.minimumDue ?? 0) - paid),
   };
 }
 
@@ -225,8 +283,8 @@ function Header({ onEdit }: { onEdit?: () => void }) {
 function Archived({ debt, balance, hide }: { debt: DebtRow; balance: number; hide: boolean }) {
   const restore = async () => {
     const db = await getAppDb();
-    if (!canAddDebt(listDebts(db).length, getEntitlement(db).isPro)) return router.push('/pro');
-    updateDebt(db, debt.id, { archivedAt: null });
+    if (!canAddDebt(debtCount(listDebts(db)), getEntitlement(db).isPro)) return router.push('/pro');
+    setFamilyArchived(db, debt.id, null);
     rescheduleReminders(db).catch(() => {});
     router.back();
   };

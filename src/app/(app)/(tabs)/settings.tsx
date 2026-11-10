@@ -8,13 +8,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { formatBackupDate } from '@/backup/preview';
 import { BILLING_MESSAGES, PRO_PRICE, restorePro } from '@/billing/billing';
+import { playStore } from '@/billing/playStore';
 import { APP_NAME, TESTER_TOOLS } from '@/config/app';
 import { getAppDb } from '@/db/client';
-import { getEntitlement, getSettings, setEntitlement, updateSettings } from '@/db/repositories/settings';
+import { getEntitlement, getSettings, updateSettings } from '@/db/repositories/settings';
 import type { Settings as SettingsRow } from '@/db/schema';
 import { runDbSelfCheck, type CheckStep } from '@/dev/dbSelfCheck';
 import { CURRENCIES, currencyName, relabelHomeCurrency } from '@/domain/currency';
-import { currencySymbol } from '@/domain/dashboard';
+import { currencySymbol, moneyText } from '@/domain/dashboard';
 import { rescheduleReminders } from '@/notifications/reminders';
 import { getLockState, setBiometrics, setWipeAfter, WIPE_AFTER, type LockState } from '@/security/pin';
 import { deleteAllData } from '@/security/wipe';
@@ -142,7 +143,7 @@ export default function Settings() {
   };
 
   const restore = async () => {
-    const r = await restorePro(await getAppDb());
+    const r = await restorePro(await getAppDb(), playStore);
     if (r === 'unlocked') return refresh();
     const msg = BILLING_MESSAGES[r];
     if (msg) Alert.alert('Restore purchase', msg);
@@ -219,7 +220,13 @@ export default function Settings() {
         </Section>
 
         <Section title="Money">
-          <Row first label="Home currency" value={currencyText(s.homeCurrency)} expanded={open === 'currency'} onPress={() => toggle('currency')} />
+          <Row
+            first
+            label="Monthly budget"
+            value={s.budgetMinor === null ? 'Not set' : moneyText(s.budgetMinor, s.homeCurrency, s.hideBalances)}
+            onPress={() => router.push({ pathname: '/budget', params: { edit: '1' } })}
+          />
+          <Row label="Home currency" value={currencyText(s.homeCurrency)} expanded={open === 'currency'} onPress={() => toggle('currency')} />
           {open === 'currency' ? (
             <Choices options={CURRENCIES.map((c) => ({ value: c.code, label: currencyText(c.code) }))} selected={s.homeCurrency} onPick={pickCurrency} />
           ) : null}
@@ -247,23 +254,18 @@ export default function Settings() {
           {APP_NAME} {Constants.expoConfig?.version ?? ''} · Not financial advice · Estimates only{'\n'}Not affiliated with any bank or card network
         </Text>
 
-        {TESTER_TOOLS ? <DevTools isPro={isPro} onChange={refresh} /> : null}
+        {TESTER_TOOLS ? <DevTools /> : null}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// Dev and tester builds only: SQLCipher check and a test Pro switch for trying the gating.
-function DevTools({ isPro, onChange }: { isPro: boolean; onChange: () => void }) {
+// Dev and tester builds only: SQLCipher check. (The free "Pro (test)" switch was removed: testers buy Pro with Play test cards, D43.)
+function DevTools() {
   const [steps, setSteps] = useState<CheckStep[] | null>(null);
-  const setPro = async (on: boolean) => {
-    setEntitlement(await getAppDb(), { isPro: on, source: on ? 'test' : null, checkedAt: new Date().toISOString() });
-    onChange();
-  };
   return (
     <Section title="Tester tools">
-      <SwitchRow first label="Pro (test)" hint="Test builds only · free, no purchase" value={isPro} onChange={setPro} />
-      <Row label="Encrypted database check" value="Run" onPress={async () => setSteps(await runDbSelfCheck())} />
+      <Row first label="Encrypted database check" value="Run" onPress={async () => setSteps(await runDbSelfCheck())} />
       {steps?.map((st) => <Row key={st.name} label={`${st.ok ? '✓' : '✗'} ${st.name}`} hint={st.detail ?? undefined} />)}
     </Section>
   );

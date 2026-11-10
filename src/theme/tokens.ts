@@ -103,6 +103,5 @@ export const size = {
   sheetHandleWidth: 40,
   sheetHandleHeight: 4,
   colorBar: 8,
-  strategyCardWidth: 286,
   strategyArt: 132,
 } as const;

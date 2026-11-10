@@ -79,9 +79,9 @@ Dark mode: not designed yet — derive from tokens later.
 | 01 | Splash | Green bg, mascot, "Kash", motivational line, "Get started", "No account needed · Works offline" |
 | 02 | Privacy promise | Step 1/5 bar, lock illustration, 3 promises, backup tip, Continue |
 | 03 | Secure the app | Turn on biometric lock / Set a 6-digit PIN; warning that there's no password reset |
-| 04 | Choose a strategy | Swipeable cards (Snowball, Avalanche, My own order, Highest cost PRO, Hybrid PRO), dots, "Help me choose", "Use {strategy}" |
+| 04 | Choose a strategy | Vertical list of cards (Snowball, Avalanche, My own order, Highest cost PRO, Hybrid PRO): name + one line, details in a "Show example" accordion, one open at a time (R14); "Help me choose", "Continue" |
 | 05 | Add your debts | Added debt cards + dashed "Add a card or loan", mascot tip, "Continue · N debts added" |
-| 06 | Add a debt | Segmented type, full-width card preview, 3×2 template grid, color swatches + custom picker, nickname, balance, interest/month, minimum, due day; "never asks for card number"; not-affiliated line |
+| 06 | Add a debt | Segmented type, full-width card preview, bank dropdown + card network chips (R15/R16), color swatches + custom picker, nickname, balance, interest/month, minimum, due day; "never asks for card number"; not-affiliated line |
 | 07 | Monthly budget | Minimums floor, amount with −/+ and slider, live debt-free date, "+₱1,000 → N months sooner" |
 | 08 | Dashboard | Hero (debt-free month/year, progress, movement chip), October payments (focus card + minimum rows + "Log an extra payment"), debts carousel, interest estimate, tab bar (Home · Plan · Debts · Settings), hide-balances toggle |
 | 09 | Debt detail | Card, balance/progress, countdown (days only when ≤ 90 days away), stats grid, Log a payment / Update balance, history |

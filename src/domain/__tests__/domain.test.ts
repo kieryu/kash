@@ -21,6 +21,8 @@ const row = (over: Partial<DebtRow>): DebtRow => ({
   acceptsExtra: true,
   statementDay: null,
   dueDay: null,
+  parentDebtId: null,
+  installmentTotal: null,
   creditLimitMinor: null,
   lateFeeMinor: null,
   promoRate: null,

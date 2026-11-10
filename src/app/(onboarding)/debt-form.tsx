@@ -1,18 +1,21 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View, type KeyboardTypeOptions } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View, type KeyboardTypeOptions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { APP_NAME } from '@/config/app';
 import { getAppDb } from '@/db/client';
-import { createDebt, deleteDebt, getDebt, listDebts, updateDebt } from '@/db/repositories/debts';
+import { createDebt, deleteDebt, getDebt, listDebts } from '@/db/repositories/debts';
 import { getEntitlement, getSettings } from '@/db/repositories/settings';
-import { balanceOf } from '@/db/repositories/transactions';
+import { balanceOf, listTransactions } from '@/db/repositories/transactions';
 import {
   CUSTOM_TEMPLATE,
   formValuesOf,
+  installmentInputsOf,
   isInstallment,
+  issuersFor,
+  optionLabel,
   parseDebtEdit,
   parseDebtForm,
   saveDebtEdit,
@@ -22,25 +25,52 @@ import {
   templatesFor,
   type DebtFormField,
   type DebtFormValues,
+  type Template,
   type Segment,
 } from '@/domain/debtForm';
-import { annualFromMonthly, formatMoney, formatPercent, parseMoney, parsePercent, today } from '@/domain/format';
+import { pickerColor, pickerStart } from '@/domain/color';
+import { currencySymbol } from '@/domain/dashboard';
+import { annualFromMonthly, currentYearMonth, formatMoney, formatPercent, parseMoney, parsePercent, today } from '@/domain/format';
+import {
+  childrenOf,
+  createCardWithInstallments,
+  onStatement,
+  parseInstallments,
+  revolvingFromStatement,
+  saveInstallments,
+  setFamilyArchived,
+  type InstallmentErrors,
+  type InstallmentInput,
+  type ParsedInstallment,
+} from '@/domain/installments';
 import { firstPayoff } from '@/domain/payments';
-import { canAddDebt, readOnlyIds } from '@/domain/plan';
+import { canAddDebt, debtCount, readOnlyIds } from '@/domain/plan';
 import { rescheduleReminders } from '@/notifications/reminders';
 import { cardSwatches, theme } from '@/theme';
-import { Button, IconButton } from '@/ui/Button';
-import { SegmentedControl, TextField } from '@/ui/Controls';
+import { Button, Chip, IconButton } from '@/ui/Button';
+import { MoneyField, SegmentedControl, TextField } from '@/ui/Controls';
 import { DebtCard } from '@/ui/DebtCard';
+import { KeyboardAvoid } from '@/ui/Keyboard';
+import { ColorPicker } from '@/ui/ColorPicker';
+import { InstallmentFields } from '@/ui/InstallmentFields';
+import { SelectField } from '@/ui/Select';
 import { BackIcon } from '@/ui/icons';
 
 // Spoken names for the swatch row, same order as cardSwatches.
 const SWATCH_NAMES = ['navy', 'green', 'red', 'orange', 'purple', 'black'];
-const COLLAPSED = 6; // template grid shows 3×2 until "Show all"
+// R16: what the issuer dropdown is called per debt type.
+const ISSUER_LABEL: Record<Segment, string> = { card: 'Bank', installment: 'Bank or provider', loan: 'Lender', other: 'Type' };
+// Custom only: the free-text name on the card's top line (empty = the debt type).
+const CUSTOM_ISSUER: Record<Segment, { label: string; placeholder: string }> = {
+  card: { label: 'Bank or issuer (optional)', placeholder: 'e.g. GCash, Maya' },
+  installment: { label: 'Provider (optional)', placeholder: 'e.g. Home Credit' },
+  loan: { label: 'Lender (optional)', placeholder: 'e.g. Tonik' },
+  other: { label: 'Lender (optional)', placeholder: 'e.g. Tita Mila' },
+};
 
 function initial(segment: Segment): DebtFormValues {
   const t = templatesFor(segment)[0];
-  return { segment, templateId: t.id, color: t.color, nickname: '', balance: '', rate: '', minimum: '', payment: '', monthsLeft: '', dueDay: '' };
+  return { segment, templateId: t.id, color: t.color, nickname: '', issuer: '', balance: '', rate: '', minimum: '', payment: '', monthsLeft: '', dueDay: '', statementDay: '' };
 }
 
 const reschedule = (db: Awaited<ReturnType<typeof getAppDb>>) => rescheduleReminders(db).catch(() => {});
@@ -53,8 +83,12 @@ export default function DebtForm() {
   const [orig, setOrig] = useState<{ values: DebtFormValues; balance: number; nickname: string } | null>(null);
   const [errors, setErrors] = useState<Partial<Record<DebtFormField, string>>>({});
   const [currency, setCurrency] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
   const [customColor, setCustomColor] = useState(false);
+  // R20: installments running on a card. `origInsts` = what the edit form started from.
+  const [hasInst, setHasInst] = useState(false);
+  const [insts, setInsts] = useState<InstallmentInput[]>([]);
+  const [instErrors, setInstErrors] = useState<InstallmentErrors[]>([]);
+  const [origInsts, setOrigInsts] = useState<ParsedInstallment[]>([]);
 
   useEffect(() => {
     getAppDb().then((db) => {
@@ -69,16 +103,27 @@ export default function DebtForm() {
       setOrig({ values, balance, nickname: row.nickname });
       setCustomColor(!(cardSwatches as readonly string[]).includes(values.color) && values.color !== templateById(values.templateId)?.color);
       setCurrency(row.currency);
+      const kids = childrenOf(listDebts(db), id);
+      const inputs = installmentInputsOf(kids, kids.flatMap((k) => listTransactions(db, k.id)), currentYearMonth());
+      const parsed = parseInstallments(inputs, row.currency);
+      setInsts(inputs);
+      setHasInst(inputs.length > 0);
+      setOrigInsts(parsed.ok ? parsed.items : []);
     });
   }, [id]);
 
   const set = (patch: Partial<DebtFormValues>) => setV((cur) => ({ ...cur, ...patch }));
   const tpl = templateById(v.templateId) ?? CUSTOM_TEMPLATE;
-  const all = templatesFor(v.segment);
+  // R15/R16: pick the bank from a dropdown, then its network (Visa / Mastercard / …) when it has more than one.
+  const issuers = issuersFor(v.segment);
+  const issuer = issuers.find((g) => g.templates.some((t) => t.id === tpl.id)) ?? issuers[issuers.length - 1];
+  const pick = (t: Template) => {
+    set({ templateId: t.id, color: t.color });
+    setCustomColor(false);
+  };
   // R5: a bank template names the debt unless a nickname is given; Custom needs its own name.
   const defaultName = templateName(tpl);
   const nameLabel = defaultName ? 'Nickname (optional)' : v.segment === 'card' ? 'Card name' : 'Name';
-  const shown = showAll ? all : [...all.slice(0, COLLAPSED - 1), CUSTOM_TEMPLATE].filter((t, i, a) => a.indexOf(t) === i);
   const installment = isInstallment(v.segment);
   const optional = v.segment === 'other';
   const segmentLabel = SEGMENTS.find((s) => s.value === v.segment)!.kindLabel;
@@ -89,24 +134,37 @@ export default function DebtForm() {
       ? (parseMoney(v.payment, currency) ?? 0) * (Number(v.monthsLeft) || 0)
       : parseMoney(v.balance, currency);
   const monthly = parsePercent(v.rate);
-  const cardColor = /^#[0-9A-Fa-f]{6}$/.test(v.color) ? v.color : tpl.color; // while a custom hex is half typed
+  const cardColor = /^#[0-9A-Fa-f]{6}$/.test(v.color) ? v.color : tpl.color;
 
   const save = async () => {
     if (!currency) return;
+    const card = v.segment === 'card';
+    const inst: ReturnType<typeof parseInstallments> = card && hasInst ? parseInstallments(insts, currency) : { ok: true, items: [] };
+    setInstErrors(inst.ok ? [] : inst.errors);
     if (id && orig) {
       const e = parseDebtEdit(v, orig.values, orig.balance, currency);
       if (!e.ok) return setErrors(e.errors);
+      if (!inst.ok) return setErrors({});
       const db = await getAppDb();
       const changed = saveDebtEdit(db, id, e.edit, today());
+      if (card) saveInstallments(db, id, origInsts, inst.items, currentYearMonth(), today());
       reschedule(db); // due day may have changed
       if (changed && firstPayoff(db, id)) return router.replace({ pathname: '/paid-off/[id]', params: { id } });
       return router.back();
     }
     const r = parseDebtForm(v, currency);
     if (!r.ok) return setErrors(r.errors);
+    if (!inst.ok) return setErrors({});
+    if (revolvingFromStatement(r.openingMinor, inst.items) < 0) {
+      const billed = inst.items.filter(onStatement).reduce((s, i) => s + i.amountMinor, 0);
+      return setErrors({ balance: `Use the total on your statement. It includes this month’s installments (${formatMoney(billed, currency)}).` });
+    }
+    setErrors({});
     const db = await getAppDb();
-    if (!canAddDebt(listDebts(db).length, getEntitlement(db).isPro)) return router.back();
-    createDebt(db, r.debt, { balanceMinor: r.openingMinor, on: today() });
+    if (!canAddDebt(debtCount(listDebts(db)), getEntitlement(db).isPro)) return router.back();
+    if (inst.items.length > 0) createCardWithInstallments(db, r.debt, r.openingMinor, inst.items, today());
+    else createDebt(db, r.debt, { balanceMinor: r.openingMinor, on: today() });
+    reschedule(db); // due and statement reminders for the new debt
     router.back();
   };
 
@@ -120,7 +178,7 @@ export default function DebtForm() {
           text: 'Archive',
           onPress: async () => {
             const db = await getAppDb();
-            updateDebt(db, id!, { archivedAt: new Date().toISOString() });
+            setFamilyArchived(db, id!, new Date().toISOString());
             reschedule(db);
             router.dismissTo('/');
           },
@@ -152,6 +210,17 @@ export default function DebtForm() {
       {errors[key] ? <Text style={styles.error}>{errors[key]}</Text> : null}
     </View>
   );
+  // R19: plain amounts get the currency sign and thousands commas as you type.
+  const moneyField = (key: 'balance' | 'payment', label: string) => (
+    <View style={styles.cell}>
+      {currency ? (
+        <MoneyField label={label} prefix={currencySymbol(currency)} currency={currency} value={v[key]} onChangeText={(t) => set({ [key]: t })} placeholder="0" />
+      ) : (
+        <TextField label={label} value={v[key]} editable={false} />
+      )}
+      {errors[key] ? <Text style={styles.error}>{errors[key]}</Text> : null}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -163,7 +232,7 @@ export default function DebtForm() {
           {editing ? 'Edit debt' : 'Add a debt'}
         </Text>
       </View>
-      <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoid>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <SegmentedControl
             accessibilityLabel="Debt type"
@@ -174,14 +243,16 @@ export default function DebtForm() {
             onChange={(segment) => {
               setV((cur) => ({ ...initial(segment), nickname: cur.nickname }));
               setErrors({});
-              setShowAll(false);
+              setHasInst(false);
+              setInsts([]);
+              setInstErrors([]);
             }}
           />
 
           <DebtCard
             variant="full"
             color={cardColor}
-            issuer={tpl.id === 'custom' ? segmentLabel : tpl.issuer}
+            issuer={tpl.id === 'custom' ? v.issuer.trim() || segmentLabel : tpl.issuer}
             kindLabel={segmentLabel}
             nickname={v.nickname || defaultName || nameLabel}
             balanceText={currency ? formatMoney(previewMinor ?? 0, currency) : ''}
@@ -189,35 +260,35 @@ export default function DebtForm() {
           />
 
           <View style={styles.group}>
-            <Text style={styles.label}>Card template</Text>
-            <View style={styles.grid}>
-              {shown.map((t) => {
-                const on = t.id === v.templateId;
-                return (
-                  <Pressable
-                    key={t.id}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: on }}
-                    accessibilityLabel={`${t.issuer} ${t.network ?? t.product}`}
-                    onPress={() => {
-                      set({ templateId: t.id, color: t.color });
-                      setCustomColor(false);
-                    }}
-                    style={[styles.tpl, { backgroundColor: t.color }, on && styles.tplOn]}
-                  >
-                    <Text style={styles.tplIssuer} numberOfLines={1}>
-                      {t.issuer}
-                    </Text>
-                    <Text style={styles.tplSub} numberOfLines={1}>
-                      {t.network ?? t.product}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-            {all.length > COLLAPSED ? (
-              <Button variant="link" label={showAll ? 'Show fewer' : 'Show all banks'} onPress={() => setShowAll(!showAll)} />
+            <SelectField
+              label={ISSUER_LABEL[v.segment]}
+              value={issuer.issuer}
+              options={issuers.map((g) => ({ value: g.issuer, label: g.issuer, color: g.templates[0].color }))}
+              onChange={(name) => pick(issuers.find((g) => g.issuer === name)!.templates[0])}
+            />
+            {issuer.templates.length > 1 ? (
+              <View style={styles.group}>
+                <Text style={styles.label}>{v.segment === 'card' || v.segment === 'installment' ? 'Card network' : 'Kind'}</Text>
+                <View style={styles.chips}>
+                  {issuer.templates.map((t) => (
+                    <Chip key={t.id} label={optionLabel(t, issuer.templates)} selected={t.id === tpl.id} onPress={() => pick(t)} />
+                  ))}
+                </View>
+              </View>
             ) : null}
+            {tpl.id === 'custom' ? (
+              <View style={styles.cell}>
+                <TextField
+                  label={CUSTOM_ISSUER[v.segment].label}
+                  value={v.issuer}
+                  onChangeText={(t) => set({ issuer: t })}
+                  placeholder={CUSTOM_ISSUER[v.segment].placeholder}
+                  maxLength={40}
+                />
+                {errors.issuer ? <Text style={styles.error}>{errors.issuer}</Text> : null}
+              </View>
+            ) : null}
+            <Text style={styles.label}>Card color</Text>
             <View style={styles.swatches}>
               {cardSwatches.map((hex, i) => (
                 <Pressable
@@ -237,7 +308,14 @@ export default function DebtForm() {
                 accessibilityRole="button"
                 accessibilityLabel="Custom card color"
                 accessibilityState={{ selected: customColor }}
-                onPress={() => setCustomColor(true)}
+                onPress={() => {
+                  // Start on the picker's own color so the preview matches the sliders (black/gray → a visible color).
+                  if (!customColor) {
+                    const start = pickerStart(cardColor);
+                    set({ color: pickerColor(start.hue, start.shade) });
+                  }
+                  setCustomColor(true);
+                }}
                 hitSlop={7}
                 style={styles.customRow}
               >
@@ -245,24 +323,19 @@ export default function DebtForm() {
                 <Text style={styles.customText}>Custom</Text>
               </Pressable>
             </View>
-            {customColor ? (
-              <View>
-                <TextField label="Card color (hex)" value={v.color} onChangeText={(color) => set({ color })} autoCapitalize="characters" maxLength={7} placeholder={colors.primary} />
-                {errors.color ? <Text style={styles.error}>{errors.color}</Text> : null}
-              </View>
-            ) : null}
+            {customColor ? <ColorPicker value={cardColor} onChange={(color) => set({ color })} /> : null}
           </View>
 
           {field('nickname', nameLabel, 'default', defaultName ?? 'e.g. Everyday Card')}
 
           {installment ? (
             <View style={styles.row}>
-              {field('payment', 'Monthly payment', 'decimal-pad')}
+              {moneyField('payment', 'Monthly payment')}
               {field('monthsLeft', 'Payments left', 'number-pad')}
             </View>
           ) : (
             <View style={styles.row}>
-              {editing ? null : field('balance', 'Current balance', 'decimal-pad')}
+              {editing ? null : moneyField('balance', hasInst && v.segment === 'card' ? 'Statement balance' : 'Current balance')}
               {field('rate', optional ? 'Interest / month (optional)' : 'Interest / month', 'decimal-pad', '3%')}
             </View>
           )}
@@ -271,6 +344,25 @@ export default function DebtForm() {
             {field('dueDay', v.segment === 'card' ? 'Due day' : 'Due day (optional)', 'number-pad', '1–31')}
             {installment ? <View style={styles.cell} /> : null}
           </View>
+          {v.segment === 'card' ? (
+            <>
+              <View style={styles.row}>
+                {field('statementDay', 'Statement day (optional)', 'number-pad', '1–31')}
+                <View style={styles.cell} />
+              </View>
+              <Text style={styles.hint}>The day your bank sends your bill. We’ll remind you to update your balance.</Text>
+              <InstallmentFields
+                on={hasInst}
+                onToggle={setHasInst}
+                items={insts}
+                errors={instErrors}
+                currency={currency}
+                editing={editing}
+                onChange={setInsts}
+              />
+              {hasInst && !editing ? <Text style={styles.hint}>Statement balance = the total on your statement, this month’s installments included.</Text> : null}
+            </>
+          ) : null}
 
           {editing && !installment ? <Text style={styles.hint}>To change the balance, use Update balance.</Text> : null}
 
@@ -299,26 +391,21 @@ export default function DebtForm() {
         <View style={styles.footer}>
           <Button label={editing ? 'Save changes' : 'Save debt'} onPress={save} disabled={!currency} />
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardAvoid>
     </SafeAreaView>
   );
 }
 
-const { colors, radius, space, type } = theme;
+const { colors, space, type } = theme;
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  fill: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.lg, paddingTop: space.sm, paddingBottom: space.sm },
   title: { ...type.screenHeader, color: colors.ink },
   content: { paddingHorizontal: space.screenOnboarding, paddingTop: space.sm, paddingBottom: space.lg, gap: 18 },
   group: { gap: space.sm },
   label: { ...type.label, color: colors.muted },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  tpl: { width: '31.5%', minHeight: 58, borderRadius: radius.input, padding: space.sm, paddingHorizontal: 10, justifyContent: 'space-between', borderWidth: 3, borderColor: 'transparent' },
-  tplOn: { borderColor: colors.accent },
-  tplIssuer: { ...type.captionBold, color: colors.onPrimary },
-  tplSub: { ...type.micro, color: colors.onPrimary, opacity: 0.9 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   swatches: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   swatch: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: colors.surface },
   swatchOn: { borderWidth: 3, borderColor: colors.accent },

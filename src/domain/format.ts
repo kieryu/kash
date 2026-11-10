@@ -34,6 +34,46 @@ export function parseMoney(text: string, currency: Currency): Minor | null {
   return Number.isSafeInteger(n) ? n : null;
 }
 
+/**
+ * Live formatting for a money field while typing: "18450.5" → "18,450.5". Keeps a trailing "." so the
+ * user can type decimals, and drops decimals the currency doesn't have (JPY none, PHP 2). parseMoney reads it back.
+ */
+export function amountTyping(text: string, currency: Currency): string {
+  const [int = '', ...rest] = text.replace(/[^\d.]/g, '').split('.');
+  const whole = int.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const digits = minorDigits(currency);
+  if (rest.length === 0 || digits === 0) return whole;
+  return `${whole || '0'}.${rest.join('').slice(0, digits)}`;
+}
+
+const significant = (c: string) => (c >= '0' && c <= '9') || c === '.';
+
+/**
+ * One keystroke in a money field: `prev` is what the field showed, `raw` what it holds after the edit.
+ * Returns the re-formatted text and where the cursor goes, so editing mid-number keeps the cursor
+ * next to the digit just typed ("1|2,400" + "5" → "15|2,400"). Backspacing over a comma deletes the
+ * digit before it, as people expect.
+ */
+export function amountEdit(prev: string, raw: string, currency: Currency): { text: string; caret: number } {
+  // Unchanged head and tail around the edit; the cursor sits where the tail starts. The head wins
+  // when digits repeat ("999" → "9999"), so the cursor lands after the newest digit.
+  let head = 0;
+  while (head < prev.length && head < raw.length && prev[head] === raw[head]) head++;
+  const room = Math.min(prev.length, raw.length) - head;
+  let tail = 0;
+  while (tail < room && prev[prev.length - 1 - tail] === raw[raw.length - 1 - tail]) tail++;
+  const removed = prev.length - raw.length === 1 ? prev[prev.length - 1 - tail] : null;
+  if (removed === ',') {
+    const at = raw.length - tail; // comma was here; drop the digit before it too
+    raw = raw.slice(0, Math.max(0, at - 1)) + raw.slice(at);
+  }
+  const before = [...raw.slice(0, raw.length - tail)].filter(significant).length;
+  const text = amountTyping(raw, currency);
+  let caret = 0;
+  for (let seen = 0; caret < text.length && seen < before; caret++) if (significant(text[caret])) seen++;
+  return { text, caret };
+}
+
 /** "3" or "3.5%" (percent) → decimal string "0.03" / "0.035"; null if not a plain number. */
 export function parsePercent(text: string): DecimalStr | null {
   const s = text.replace(/[%\s]/g, '');

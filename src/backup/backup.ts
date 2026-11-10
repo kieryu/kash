@@ -62,6 +62,7 @@ export class BackupTooNewError extends Error {
 // Upgrades backup data from schema v(i+1) to v(i+2). A test makes each new DB migration add one here.
 export const UPGRADES: ((d: BackupData) => BackupData)[] = [
   (d) => d, // v2 only changed a trigger
+  (d) => ({ ...d, debts: d.debts.map((r) => ({ ...r, parentDebtId: null, installmentTotal: null })) }), // v3: card installments (R20)
 ];
 
 function deriveKey(password: string, salt: Uint8Array, p: typeof SCRYPT): Promise<Uint8Array> {

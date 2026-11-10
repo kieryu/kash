@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BILLING_MESSAGES, buyPro, PRO_PRICE, restorePro, type BillingResult } from '@/billing/billing';
+import { lastBillingError, playStore } from '@/billing/playStore';
 import { APP_NAME } from '@/config/app';
 import { getAppDb } from '@/db/client';
 import { getEntitlement } from '@/db/repositories/settings';
@@ -29,19 +30,28 @@ export default function Pro() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  const [price, setPrice] = useState(PRO_PRICE);
+
   useEffect(() => {
     getAppDb().then((db) => setIsPro(getEntitlement(db).isPro));
+    // Play's price in the user's currency; keep the default if Play can't be reached.
+    playStore
+      .price()
+      .then((p) => p && setPrice(p))
+      .catch(() => {});
   }, []);
 
   const run = async (action: typeof buyPro) => {
     setBusy(true);
     setMessage(null);
     try {
-      const r: BillingResult = await action(await getAppDb());
+      const r: BillingResult = await action(await getAppDb(), playStore);
       if (r === 'unlocked') setIsPro(true);
+      // Play's reason helps testers report what went wrong (codes only, no personal data).
+      else if (r === 'failed') setMessage(`${BILLING_MESSAGES.failed}\n\nGoogle Play said: ${lastBillingError() ?? 'unknown'}`);
       else setMessage(BILLING_MESSAGES[r]);
     } catch {
-      setMessage('Something went wrong. Nothing was charged. Try again later.');
+      setMessage(BILLING_MESSAGES.failed);
     } finally {
       setBusy(false);
     }
@@ -69,7 +79,7 @@ export default function Pro() {
             </Text>
           ) : (
             <Text style={styles.lead}>
-              <Text style={styles.leadStrong}>{PRO_PRICE} one time.</Text> No subscription, no ads.
+              <Text style={styles.leadStrong}>{price} one time.</Text> No subscription, no ads.
             </Text>
           )}
         </View>
@@ -113,7 +123,7 @@ export default function Pro() {
           <Button label="Done" onPress={close} />
         ) : (
           <>
-            <Button variant="accent" label={busy ? 'One moment…' : `Unlock for ${PRO_PRICE}`} disabled={busy} onPress={() => run(buyPro)} />
+            <Button variant="accent" label={busy ? 'One moment…' : `Unlock for ${price}`} disabled={busy} onPress={() => run(buyPro)} />
             <Button variant="link" label="Maybe later" onPress={close} />
             <Text accessibilityRole="button" accessibilityState={{ disabled: busy }} style={styles.restore} onPress={busy ? undefined : () => run(restorePro)}>
               Restore purchase

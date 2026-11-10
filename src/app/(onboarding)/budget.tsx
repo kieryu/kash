@@ -1,6 +1,6 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { getAppDb } from '@/db/client';
@@ -8,13 +8,16 @@ import { listDebts } from '@/db/repositories/debts';
 import { getSettings, updateSettings } from '@/db/repositories/settings';
 import { balances } from '@/db/repositories/transactions';
 import type { Settings } from '@/db/schema';
-import { currentYearMonth, formatMoney, formatYearMonth, monthsBetween, timeUntil } from '@/domain/format';
-import { budgetRange, budgetStep, minimumsFloor, planInput } from '@/domain/plan';
+import { currencySymbol } from '@/domain/dashboard';
+import { currentYearMonth, formatMoney, formatYearMonth, monthsBetween, parseMoney, timeUntil } from '@/domain/format';
+import { amountInputText } from '@/domain/payments';
+import { budgetRange, budgetStep, budgetStepTo, minimumsFloor, planInput } from '@/domain/plan';
 import { simulate } from '@/engine/simulate';
 import { requestReminderPermission } from '@/notifications/reminders';
 import type { PlanInput, PlanResult } from '@/engine/types';
 import { theme } from '@/theme';
 import { Button } from '@/ui/Button';
+import { useMoneyInput } from '@/ui/Controls';
 import { Mascot } from '@/ui/Mascot';
 import { OnboardingScreen } from '@/ui/Onboarding';
 import { Slider } from '@/ui/Slider';
@@ -24,9 +27,13 @@ const STRATEGY_NAMES: Record<Settings['strategy'], string> = { snowball: 'Snowba
 type Loaded = { base: PlanInput; strategy: Settings['strategy']; floor: number; step: number; min: number; max: number };
 
 // 07 Monthly budget. Runs the payoff engine live as the amount changes.
+// `?edit=1`: reopened from Settings or the dashboard to change the budget after onboarding.
 export default function Budget() {
+  const editing = useLocalSearchParams<{ edit?: string }>().edit === '1';
   const [data, setData] = useState<Loaded | null>(null);
   const [budget, setBudget] = useState(0);
+  // What the amount field shows; follows −/+ and the slider, or whatever the user types (R22).
+  const [text, setText] = useState('');
 
   useEffect(() => {
     getAppDb().then((db) => {
@@ -37,6 +44,7 @@ export default function Budget() {
       const range = budgetRange(floor, step, s.budgetMinor);
       setData({ base, strategy: s.strategy, floor, step, min: range.min, max: range.max });
       setBudget(range.start);
+      setText(amountInputText(range.start, base.currency));
     });
   }, []);
 
@@ -45,9 +53,21 @@ export default function Budget() {
 
   if (!data || !plan || !faster) return null;
   const money = (n: number) => formatMoney(n, data.base.currency);
-  const clamp = (n: number) => Math.min(data.max, Math.max(data.min, n));
+  const setAmount = (n: number) => {
+    setBudget(n);
+    setText(amountInputText(n, data.base.currency));
+  };
+  const typed = (t: string) => {
+    setText(t);
+    setBudget(parseMoney(t, data.base.currency) ?? 0);
+  };
+  const tooLow = budget < data.floor;
 
   const finish = async () => {
+    if (editing) {
+      updateSettings(await getAppDb(), { budgetMinor: budget });
+      return router.back();
+    }
     updateSettings(await getAppDb(), { budgetMinor: budget, planStartMonth: data.base.start, onboardingDone: true });
     // Ask here: the plan is set, so due-date and statement reminders make sense. The app layout schedules them.
     await requestReminderPermission().catch(() => false);
@@ -57,8 +77,8 @@ export default function Budget() {
 
   return (
     <OnboardingScreen
-      step={5}
-      title="How much can you pay each month?"
+      step={editing ? undefined : 5}
+      title={editing ? 'Change your monthly budget' : 'How much can you pay each month?'}
       body={
         <>
           Your minimums add up to <Text style={styles.strong}>{money(data.floor)}</Text>. Anything above that speeds up your plan.
@@ -67,24 +87,22 @@ export default function Budget() {
       footer={
         <>
           <Text style={styles.estimate}>Estimate only — real statements may differ.</Text>
-          <Button label="See my plan" onPress={finish} />
+          <Button label={editing ? 'Save budget' : 'See my plan'} onPress={finish} disabled={tooLow} />
         </>
       }
     >
       <View style={styles.card}>
         <View style={styles.amountRow}>
-          <Stepper label="−" a11y={`Lower by ${money(data.step)}`} onPress={() => setBudget(clamp(budget - data.step))} />
-          <Text style={styles.amount} accessibilityLiveRegion="polite">
-            {money(budget)}
-          </Text>
-          <Stepper label="+" a11y={`Raise by ${money(data.step)}`} onPress={() => setBudget(clamp(budget + data.step))} />
+          <Stepper label="−" a11y={`Lower to the next ${money(data.step)}`} onPress={() => setAmount(budgetStepTo(budget, -1, data.step, data.floor))} />
+          <AmountInput text={text} currency={data.base.currency} onChange={typed} />
+          <Stepper label="+" a11y={`Raise to the next ${money(data.step)}`} onPress={() => setAmount(budgetStepTo(budget, 1, data.step, data.floor))} />
         </View>
         <Slider
           value={budget}
           min={data.min}
-          max={data.max}
+          max={Math.max(data.max, budget)}
           step={data.step / 5}
-          onChange={setBudget}
+          onChange={setAmount}
           accessibilityLabel="Monthly payoff budget"
           valueText={money(budget)}
         />
@@ -92,6 +110,11 @@ export default function Budget() {
           <Text style={styles.caption}>{money(data.min)} minimum</Text>
           <Text style={styles.caption}>{money(data.max)}</Text>
         </View>
+        {tooLow ? (
+          <Text style={styles.tooLow} accessibilityLiveRegion="polite">
+            Your minimums add up to {money(data.floor)}. Your budget needs to cover at least that.
+          </Text>
+        ) : null}
       </View>
 
       <Hero plan={plan} start={data.base.start} strategy={STRATEGY_NAMES[data.strategy]} money={money} />
@@ -132,6 +155,22 @@ function Hero({ plan, start, strategy, money }: { plan: PlanResult; start: strin
   );
 }
 
+/** The big amount: tap to type any amount (R22). */
+function AmountInput({ text, currency, onChange }: { text: string; currency: string; onChange: (t: string) => void }) {
+  return (
+    <View style={styles.amountBox}>
+      <Text style={styles.amount}>{currencySymbol(currency)}</Text>
+      <TextInput
+        accessibilityLabel="Monthly payoff budget amount"
+        accessibilityHint="Type an amount, or use minus, plus and the slider"
+        style={[styles.amount, styles.amountInput]}
+        selectTextOnFocus
+        {...useMoneyInput(text, currency, onChange)}
+      />
+    </View>
+  );
+}
+
 function Stepper({ label, a11y, onPress }: { label: string; a11y: string; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={a11y} onPress={onPress} style={({ pressed }) => [styles.stepper, pressed && styles.pressed]}>
@@ -146,7 +185,10 @@ const styles = StyleSheet.create({
   strong: { ...type.rowTitle, color: colors.ink },
   card: { backgroundColor: colors.surface, borderRadius: radius.cardLg - 2, padding: space.xl, gap: space.lg },
   amountRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  amount: { ...type.amountLg, color: colors.ink, flexShrink: 1 },
+  amountBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexShrink: 1, borderBottomWidth: size.border, borderBottomColor: colors.lineStrong },
+  amount: { ...type.amountLg, color: colors.ink },
+  amountInput: { flexShrink: 1, minWidth: 40, padding: 0 },
+  tooLow: { ...type.small, color: colors.accentText },
   stepper: {
     minWidth: size.input,
     minHeight: size.input,

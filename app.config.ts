@@ -19,7 +19,7 @@ const config: ExpoConfig = {
   slug: APP_SLUG,
   owner: 'kieryu19',
   scheme: APP_SLUG,
-  version: '1.0.0',
+  version: '1.0.1',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
   // Light mode only in MVP (DECISIONS.md D7).
@@ -45,6 +45,8 @@ const config: ExpoConfig = {
     'expo-secure-store',
     ['expo-local-authentication', { faceIDPermission: `Allow ${APP_NAME} to use Face ID to unlock the app.` }],
     ['expo-sqlite', { useSQLCipher: true }],
+    // Google Play Billing for the one-time Pro unlock (D43). Adds the BILLING permission.
+    'expo-iap',
     [
       'expo-splash-screen',
       {

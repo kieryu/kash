@@ -7,6 +7,7 @@ import { theme } from '@/theme';
 import { Button, IconButton } from './Button';
 import { TextField } from './Controls';
 import { BackIcon } from './icons';
+import { KeyboardAvoid } from './Keyboard';
 
 type Props = {
   title: string;
@@ -28,10 +29,12 @@ export function BackScreen({ title, onBack, children, footer }: Props) {
           {title}
         </Text>
       </View>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {children}
-      </ScrollView>
-      {footer ? <View style={styles.footer}>{footer}</View> : null}
+      <KeyboardAvoid>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {children}
+        </ScrollView>
+        {footer ? <View style={styles.footer}>{footer}</View> : null}
+      </KeyboardAvoid>
     </SafeAreaView>
   );
 }
